@@ -1,0 +1,5 @@
+*
+!npps.ini
+!*.sql
+!*.db_
+!event/
