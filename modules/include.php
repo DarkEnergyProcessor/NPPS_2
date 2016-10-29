@@ -66,7 +66,7 @@ function time_elapsed_string(int $datetime, bool $full = false): string {
 	return $string ? implode(', ', $string) . ' ago' : 'just now';
 }
 
-/* Get SQLite3 database handle */
+// Get SQLite3 database handle
 function npps_get_database(string $db_name = ''): DatabaseWrapper
 {
 	static $db_list = [];
@@ -99,7 +99,7 @@ function npps_attach_database(DatabaseWrapper $db, string $another_db, string ..
 	if(isset($attached_db[$string_representation][$another_db]) == false)
 	{
 		$re = str_replace('/', '_', $another_db);
-		$attached_db[$string_representation][$another_db] = $db->execute_query("ATTACH DATABASE `data/$another_db.db_` as $re");
+		$attached_db[$string_representation][$another_db] = $db->query("ATTACH DATABASE `data/$another_db.db_` as $re");
 	}
 	
 	foreach($db_list as $name)
@@ -107,20 +107,20 @@ function npps_attach_database(DatabaseWrapper $db, string $another_db, string ..
 		if(isset($attached_db[$string_representation][$name]) == false)
 		{
 			$re = str_replace('/', '_', $name);
-			$attached_db[$string_representation][$name] = $db->execute_query("ATTACH DATABASE `data/$name.db_` as $re");
+			$attached_db[$string_representation][$name] = $db->query("ATTACH DATABASE `data/$name.db_` as $re");
 		}
 	}
 }
 
-// Equivalent to $DATABASE->execute_query(...)
+// Equivalent to $DATABASE->query(...)
 function npps_query(string $query, string $list = NULL, ...$arglist)
 {
 	$DATABASE = $GLOBALS['DATABASE'];
 	
 	if($list !== NULL)
-		return $DATABASE->execute_query($query, $list, ...$arglist);
+		return $DATABASE->query($query, $list, ...$arglist);
 	else
-		return $DATABASE->execute_query($query);
+		return $DATABASE->query($query);
 }
 
 // Similar to npps_query, but specify SQL file and variables to be substituted inside
@@ -132,14 +132,12 @@ function npps_file_query(string $filename, array $variable_list = [])
 	
 	{
 		extract($variable_list);
-		$res = eval(<<<HELLO
+		$__res = eval("
 return <<<DATA
-BEGIN;
 $__x
-COMMIT;
 DATA
-HELLO
-		);
+;
+		");
 	}
 	
 	return npps_query($__res);
@@ -278,10 +276,10 @@ function npps_config(string $config_name = '', bool $access_outside = false)
 			// Only define for global scope
 			if(!is_array($v))
 				define($k, $v);
-		
-		if(strlen($config_name) == 0)
-			return;	// Only initializing
 	}
+	
+	if(strlen($config_name) == 0)
+		return $config_list;	// Return configuration list instead
 	
 	if($CURRENT_MODULE && $CURRENT_ACTION)
 		$module_action = "$CURENT_MODULE/$CURRENT_ACTION";
@@ -388,6 +386,30 @@ function npps_call_module(string $module_action, array $request_data = [])
 			return $val[0];
 	}
 	else if(!$val)
+		return NULL;
+}
+
+// Get decryption key of SIF v4.0.x
+function npps_decryption_key(int $index = 0, bool $raw = true)
+{
+	static $decryption_key_list = NULL;
+	
+	if($index == 0)
+	{
+		// Return the decryption key list instead
+		if($decryption_key_list == NULL)
+			// But, if it's NULL, load it first
+			$decryption_key_list = parse_ini_file('data/decryption_key.ini');
+		
+		return $decryption_key_list;
+	}
+	
+	if(isset($decryption_key_list[$index]))
+		if($raw)
+			return base64_decode($decryption_key_list[$index]);
+		else
+			return $decryption_key_list[$index];
+	else
 		return NULL;
 }
 

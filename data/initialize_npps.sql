@@ -1,4 +1,5 @@
--- This file contains bunch of SQL statement to initialize private server environment for the first time.
+-- This file contains SQL statement to initialize NPPS for the first time.
+-- The SQL statement must be compatible both for MySQL and SQLite3
 
 CREATE TABLE `event_list` (
 	event_id INTEGER PRIMARY KEY,						-- The event ID from event_common.db_
@@ -17,14 +18,14 @@ CREATE TABLE `event_list` (
 	expert_lp INTEGER NOT NULL DEFAULT 25,				-- Same as above (expert)
 	technical_lp INTEGER NOT NULL DEFAULT 25,			-- Same as above (technical)
 	event_ranking_table TEXT NOT NULL,					-- The event player ranking list table.
-	event_song_table TEXT DEFAULT NULL					-- The event song ranking list table for token event or NULL
+	event_song_table TEXT NOT NULL						-- The event song ranking list table.
 );
 CREATE TABLE `logged_in` (
 	login_key TEXT,											-- The associated login key or NULL if stil in "authkey"
 	login_pwd TEXT,											-- The associated login password or NULL if still in "authkey"
 	token TEXT NOT NULL,									-- The token.
-	time INTEGER NOT NULL,									-- Last activity time.
-	pseudo_unit_own_id INTEGER NOT NULL DEFAULT 2147483647	-- Pseudo unit_owning_user_id to solve some problems related to unit.
+	last_activity_time INTEGER NOT NULL,					-- Last activity time.
+	pseudo_unit_own_id INTEGER NOT NULL DEFAULT -1			-- Pseudo unit_owning_user_id to solve some problems related to unit.
 );
 CREATE TABLE `users` (
 	user_id INTEGER PRIMARY KEY AUTO_INCREMENT,				-- The user ID
@@ -43,12 +44,12 @@ CREATE TABLE `users` (
 	last_active INTEGER NOT NULL,							-- Last active in unix timestamp
 	login_count INTEGER NOT NULL DEFAULT 0,					-- Last lbonus/execute execution timestamp
 	background_id INTEGER NOT NULL DEFAULT 1,				-- Set background
-	badge_id INTEGER NOT NULL DEFAULT 1,					-- Set badge (titles)
+	title_id INTEGER NOT NULL DEFAULT 1,					-- Set badge (titles)
 	current_exp INTEGER NOT NULL DEFAULT 0,					-- Current EXP
 	next_exp INTEGER NOT NULL, 								-- Next EXP before level up
 	level INTEGER NOT NULL DEFAULT 1,						-- The player rank
 	gold INTEGER NOT NULL DEFAULT 36400,					-- Gold amount
-	friend_point INTEGER NOT NULL DEFAULT 5,				-- Friend Point amount
+	friend_points INTEGER NOT NULL DEFAULT 5,				-- Friend Point amount
 	paid_loveca INTEGER NOT NULL DEFAULT 0,					-- Amount of loveca that bought
 	free_loveca INTEGER NOT NULL DEFAULT 0,					-- Amount of loveca that came in-game (not bought)
 	max_lp INTEGER NOT NULL DEFAULT 25,						-- Maximum LP
@@ -60,17 +61,17 @@ CREATE TABLE `users` (
 	main_deck INTEGER NOT NULL DEFAULT 1,					-- Which deck is set to "Main"?
 	normal_sticker INTEGER NOT NULL DEFAULT 0,				-- R stickers
 	silver_sticker INTEGER NOT NULL DEFAULT 0,				-- SR stickers
-	gold_sticker INTEGER NOT NULL DEFAULT 0,				-- UR stickers
+	gold_sticker INTEGER NOT NULL DEFAULT 0,				-- SSR stickers
+	purple_sticker INTEGER NOT NULL DEFAULT 0,				-- UR stickers
 	tutorial_state INTEGER NOT NULL DEFAULT 0,				-- The tutorial state.
-	latest_scenario DECIMAL(8,4) NOT NULL DEFAULT 3.3000,	-- Last unlocked scenario (integral part). The fraction part is story ID that haven't viewed.
+	latest_scenario DECIMAL(8,4) NOT NULL DEFAULT 3.3000,	-- Last unlocked scenario (integral part). The fraction part is scenario ID that haven't viewed.
 	subscenario_tracking TEXT DEFAULT NULL,					-- Unlocked subscenario ID list. Add '!' to indicate it's already viewed. Comma separated (defaults to empty string)
-	unlocked_badge TEXT NOT NULL,							-- Unlocked badge. Comma separated
+	unlocked_title TEXT NOT NULL,							-- Unlocked badge. Comma separated
 	unlocked_background TEXT NOT NULL,						-- Unlocked background. Comma separated
 	friend_list TEXT NOT NULL,								-- Friendlist in format <user ID>,<user ID>,...
 	present_table TEXT NOT NULL,							-- The present box table name
 	achievement_table TEXT NOT NULL,						-- The assignment table name
 	item_table TEXT NOT NULL,								-- The items table name (add_type = 1000)
-	live_table TEXT NOT NULL,								-- The live information table name
 	unit_table TEXT NOT NULL,								-- Unit list table name
 	deck_table TEXT NOT NULL,								-- Deck list table name
 	sticker_table TEXT NOT NULL,							-- List of already exchanged seals (for item with limited amount)
@@ -80,19 +81,18 @@ CREATE TABLE `users` (
 CREATE TABLE `login_bonus` (
 	month INTEGER NOT NULL,					-- The month number
 	day INTEGER NOT NULL,					-- The day
-	item_id INTEGER NOT NULL,				-- The item ID
-	card_num INTEGER,						-- Card ID (not in album) or NULL
+	add_type INTEGER NOT NULL,				-- The item ID
+	item_id INTEGER,						-- Card ID (not in album) or NULL
 	amount INTEGER NOT NULL,				-- Item amout
 	PRIMARY KEY(month, day)
 );
--- The login bonus in-order: loveca(1), gold(3000), fp(500), repeat (every month)
 CREATE TABLE `special_login_bonus` (
 	login_bonus_id INTEGER PRIMARY KEY,				-- Login bonus ID. You should not use 0
 	start_time INTEGER NOT NULL DEFAULT 0,			-- When the login bonus should start distributed
-	end_time INTEGER NOT NULL DEFAULT 2147483647,	-- When the login bonus no longer distributed
+	end_time INTEGER NOT NULL DEFAULT 2147483647,	-- When the login bonus stop distributed
 	message TEXT NOT NULL,							-- Message to show in-game
 	banner TEXT NOT NULL,							-- Banner to show in-game
-	items TEXT NOT NULL								-- Items list. Format: <item ID>:<amount>[:<more ID>],<item ID>:<amount>[:<more ID>],... MAX 7.
+	items TEXT NOT NULL								-- Items list. Format: <add_type>:<amount>[:<item_id>],... MAX 7 for v4.0.2 and MAX 9 for v4.0.3
 );
 CREATE TABLE `birthday_login_bonus` (
 	date VARCHAR(5) NOT NULL,	-- In DD-MM format. Login bonus ID is "(day * 12 + (month - 1)) << 16" (used when sending response only)
@@ -146,8 +146,16 @@ CREATE TABLE `b_side_schedule` (
 	end_available_time INTEGER NOT NULL DEFAULT 2147483647		-- When it leaves? (Unix timestamp) default to "never leaves"
 );
 CREATE TABLE `daily_rotation` (
-	live_difficulty_id INTEGER NOT NULL,		-- The live ID
+	live_difficulty_id INTEGER PRIMARY KEY,		-- The live ID
 	daily_category INTEGER NOT NULL				-- The daily live categoy ID.
+);
+CREATE TABLE `live_information` (
+	live_difficulty_id INTEGER PRIMARY KEY,		-- The live ID
+	user_id INTEGER NOT NULL,					-- The user ID
+	normal_live BOOL NOT NULL DEFAULT 1,		-- Is the live available in Hits? (used to track EX scores)
+	score INTEGER NOT NULL DEFAULT 0,			-- Highest score
+	combo INTEGER NOT NULL DEFAULT 0,			-- Highest combo
+	times INTEGER NOT NULL DEFAULT 0			-- x times played
 );
 CREATE TABLE `secretbox_gauge` (
 	user_id INTEGER NOT NULL PRIMARY KEY,		-- The user ID
@@ -160,9 +168,8 @@ CREATE TABLE `personal_notice` (
 );
 /*
 You may want to add 1 dummy user in your list first so that you can Live Show!
-Table definition above is necessary for the server. Now the user-specific SQL structure is in initialize_user.sql
+Table definition above is necessary for the server. The user-specific SQL structure is in initialize_user.sql
 
-/*
 The event ranking table definition file is:
 Token event: initialize_event_marathon.sql
 Scorematch event: initialize_event_battle.sql

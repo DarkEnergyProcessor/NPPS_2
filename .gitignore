@@ -1,0 +1,13 @@
+*.db*
+*.bat
+*.html
+*.so
+*.sql
+.sqlite3_initialized
+my.php
+web.config
+.htaccess
+dlc/sifemu.php
+save.json
+.lock_sifemu
+!/webview/static/*.html

@@ -1,11 +1,11 @@
 CREATE TABLE `present_$user_id` (
-	item_pos INTEGER PRIMARY KEY AUTO_INCREMENT,	-- The item position
-	item_type INTEGER NOT NULL,						-- The item type ID
-	card_num INTEGER,								-- The card internal ID (can be other ID) or NULL.
-	amount INTEGER NOT NULL,						-- Amount of the item
-	message TEXT NOT NULL,							-- Additional message like: "Event achievement reward"
-	expire INTEGER DEFAULT NULL,					-- Unix timestamp when the item expire or NULL for no expiration
-	collected INTEGER DEFAULT NULL					-- Unix timestamp for when the item was collected or NULL for not collected
+	incentive_idx INTEGER PRIMARY KEY AUTO_INCREMENT,	-- The item position
+	add_type INTEGER NOT NULL,							-- The item type ID
+	item_id INTEGER,									-- The card internal ID (can be other ID) or NULL.
+	amount INTEGER NOT NULL,							-- Amount of the item
+	message TEXT NOT NULL,								-- Additional message like: "Event achievement reward"
+	expire INTEGER DEFAULT NULL,						-- Unix timestamp when the item expire or NULL for no expiration
+	collected INTEGER DEFAULT NULL						-- Unix timestamp for when the item was collected or NULL for not collected
 );
 CREATE TABLE `achievement_$user_id` (
 	achievement_id INTEGER NOT NULL PRIMARY KEY,	-- The assignment id
@@ -16,30 +16,32 @@ CREATE TABLE `achievement_$user_id` (
 	complete_flag INTEGER NOT NULL DEFAULT 0,		-- Is complete?
 	reward TEXT NOT NULL							-- Reward in format: <add_type>:<amount>[:<item_id>], ...
 );
-CREATETABLE `item_$user_id` (
+CREATE TABLE `item_$user_id` (
 	item_id INTEGER PRIMARY KEY,		-- The item ID
 	amount INTEGER NOT NULL DEFAULT 0	-- The item amount
-);
-CREATE TABLE `live_$user_id` (
-	live_difficulty_id INTEGER NOT NULL PRIMARY KEY,	-- The live (difficulty) ID
-	normal_live BOOL NOT NULL DEFAULT 1,				-- Is the live available in Hits? (used to track EX scores)
-	score INTEGER NOT NULL DEFAULT 0,					-- Highest score
-	combo INTEGER NOT NULL DEFAULT 0,					-- Highest combo
-	times INTEGER NOT NULL DEFAULT 0					-- x times played
 );
 CREATE TABLE `unit_$user_id` (
 	unit_owning_user_id INTEGER PRIMARY KEY AUTO_INCREMENT,	-- The unit owning user ID
 	unit_id INTEGER NOT NULL,								-- The card internal ID
-	current_exp INTEGER NOT NULL DEFAULT 0,					-- Current EXP
+	exp INTEGER NOT NULL DEFAULT 0,							-- Current EXP
 	next_exp INTEGER NOT NULL,								-- Next EXP before level up
 	level INTEGER NOT NULL DEFAULT 1,						-- Card level
 	max_level INTEGER NOT NULL,								-- Card max level
-	skill_level INTEGER NOT NULL DEFAULT 1,					-- Skill level
-	skill_level_exp INTEGER NOT NULL DEFAULT 0,				-- Skill level EXP. To follow JP v4.0 behaviour.
-	health_points INTEGER NOT NULL,							-- Card max HP
+	rank INTEGER DEFAULT 1,									-- Card rank
+	max_rank INTEGER DEFAULT 2,								-- Card max rank
+	display_rank INTEGER DEFAULT 1,							-- Card display. 2 = Show idolized, 1 = Show unidolized
+	unit_skill_level INTEGER NOT NULL DEFAULT 1,			-- Skill level
+	unit_skill_exp INTEGER NOT NULL DEFAULT 0,				-- Skill level EXP
+	max_hp INTEGER NOT NULL,								-- Card max HP
 	love INTEGER NOT NULL DEFAULT 0,						-- Card bond
 	max_love INTEGER NOT NULL,								-- Card max bond
-	favorite BOOL NOT NULL DEFAULT 0,						-- Flagged as favourite?
+	unit_removable_skill_capacity INTEGER NOT NULL,			-- SIS unlocked slot count
+	is_rank_max BOOL NOT NULL DEFAULT 0,					-- Is card already idolized?
+	is_love_max BOOL NOT NULL DEFAULT 0,					-- Is card already max bonded?
+	is_level_max BOOL NOT NULL DEFAULT 0,					-- Is card already max level?
+	is_skill_level_max BOOL NOT NULL DEFAULT 0,				-- Is card skill level in max?
+	is_removable_skill_capacity_max BOOL NOT NULL DEFAULT 0,-- Is card SIS capacity is at max?
+	favorite_flag BOOL NOT NULL DEFAULT 0,					-- Flagged as favourite?
 	insert_date INTEGER NOT NULL							-- Unix timestamp when this card added
 );
 CREATE TABLE `deck_$user_id` (
@@ -57,7 +59,7 @@ CREATE TABLE `login_bonus_$user_id` (
 );
 CREATE TABLE `album_$user_id` (
 	unit_id INTEGER NOT NULL PRIMARY KEY,			-- The unit ID
-	flags TINYINT NOT NULL DEFAULT 0,				-- Flags bit: 0 = ever have?; 1 = ever idolized?; 2 = ever max bond?; 3 = ever max level?
+	flags TINYINT NOT NULL DEFAULT 0,				-- Flags bit: 0 = ever have?; 1 = ever idolized?; 2 = ever max bond?; 3 = ever max level?; 4 = ever all max?
 	total_love INTEGER NOT NULL DEFAULT 0			-- Max total bond. To follow JP v4.0 behaviour.
 );
 
@@ -74,6 +76,6 @@ INSERT INTO `deck_$user_id` VALUES (9, 'Team I', '0:0:0:0:0:0:0:0:0');
 
 -- Update users
 UPDATE `users` SET invite_code = $invite_code, present_table = present_$user_id, achievement_table = achievement_$user_id,
-item_table = item_$user_id, live_table = live_$user_id, unit_table = unit_$user_id, deck_table = deck_$user_id,
-sticker_table = sticker_$user_id, login_bonus_table = login_bonus_$user_id, album_table = album_$user_id, unlocked_badge = '1',
+item_table = item_$user_id, unit_table = unit_$user_id, deck_table = deck_$user_id,
+sticker_table = sticker_$user_id, login_bonus_table = login_bonus_$user_id, album_table = album_$user_id, unlocked_title = '1',
 unlocked_background = '1' WHERE user_id = $user_id;
