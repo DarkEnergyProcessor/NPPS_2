@@ -8,17 +8,14 @@ if(!defined("MAIN_INVOKED")) exit;
 
 function common_initialize_environment(DatabaseWrapper $db, $direct_db = NULL)
 {
-	$a = file_get_contents('data/initialize_npps.sql');
-	$query = <<<QUERY
-BEGIN;
-$a
-$b
-COMMIT
-QUERY
-	;
-	
-	if($db->execute_query($query) == false)
-		throw new Exception('Unable to initialize environment!');
+	npps_begin_transaction();
+	if(npps_file_query('data/initialize_npps.sql') && npps_file_query('data/initialize_daily_login_bonus.sql'))
+	{
+		npps_end_transaction();
+		
+		return;
+	}
+	throw new Exception('Unable to initialize environment!');
 }
 
 $GLOBALS['common_sqlite3_concat_function'] = function(string ...$arg): string
@@ -44,7 +41,7 @@ abstract class DatabaseWrapper
 	/* to pass values to INSERT, UPDATE, ... */
 	/* values can be single value of array that contain everything or can be passed */
 	/* as function argument. If there's multiple SELECT, only the first result are returned */
-	abstract public function execute_query(string $query, string $types = NULL, ...$values);
+	abstract public function query(string $query, string $types = NULL, ...$values);
 	
 	/* Returns string representation of this database wrapper */
 	abstract public function __toString();
@@ -96,16 +93,24 @@ class MySQLDatabaseWrapper extends DatabaseWrapper
 	
 	public function initialize_environment()
 	{
-		if(count($this->execute_query('SHOW TABLES LIKE "school_idol_initialized"')) > 0) return;
+		if(count($this->query('SHOW TABLES LIKE \'initialized\'')) > 0) return;
+		
+		// Clean all tables
+		$this->query('BEGIN');
+		foreach($this->query('SHOW TABLES') as $tables)
+		{
+			$table_name = reset($tables);
+			$this->query("DROP TABLE $table_name");
+		}
 		
 		common_initialize_environment($this, $this->db_handle);
-		$this->db_handle->execute_query('ALTER TABLE `secretbox_list` AUTO_INCREMENT = 1');	// MySQL fix
 		
 		// Add initialized flag
-		$this->execute_query('CREATE TABLE `school_idol_initialized` (unused INTEGER)');
+		$this->query('CREATE TABLE `initialized` (a INT)');
+		$this->query('COMMIT');
 	}
 	
-	public function execute_query(string $query, string $types = NULL, ...$values)
+	public function query(string $query, string $types = NULL, ...$values)
 	{
 		$query = str_ireplace('INSERT OR IGNORE', 'INSERT IGNORE', preg_replace('/\?\d*/', "?", str_ireplace("RANDOM", "RAND", $query)));
 		
@@ -274,7 +279,7 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 			throw new Exception('Cannot initialize environment when opening another DB file');
 		
 		{
-			$result = $this->db_handle->query('SELECT name FROM `sqlite_master` WHERE tbl_name = "initialized"');
+			$result = $this->db_handle->query('SELECT name FROM `sqlite_master` WHERE tbl_name = \'initialized\'');
 			$has_result = false;
 			
 			while($row = $result->fetchArray())
@@ -297,7 +302,7 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 		$this->db_handle->exec('CREATE TABLE `initialized` (a, b)');
 	}
 	
-	public function execute_query(string $query, string $types = NULL, ...$values)
+	public function query(string $query, string $types = NULL, ...$values)
 	{
 		/* Try to convert the MySQL-specific keyword to SQLite */
 		$query = str_ireplace("AUTO_INCREMENT", "AUTOINCREMENT", str_ireplace("LAST_INSERT_ID", "last_insert_rowid", $query));

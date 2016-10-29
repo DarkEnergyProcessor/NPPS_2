@@ -96,6 +96,7 @@ $HANDLER_SHUTDOWN = function()
 	if(!npps_config('DEBUG_ENVIRONMENT'))
 		$contents = "";
 	
+	// Check if the request fails
 	if($REQUEST_SUCCESS == false)
 	{
 		$output = [
@@ -103,7 +104,7 @@ $HANDLER_SHUTDOWN = function()
 		];
 		
 		if(http_response_code() == 200)
-			http_response_code(error_get_last() == NULL ? 403 : 500);	// If it's not previously set
+			npps_http_code(error_get_last() == NULL ? 403 : 500);	// If it's not previously set
 		
 		ob_end_clean();
 		$asd = json_encode($output);
@@ -111,11 +112,19 @@ $HANDLER_SHUTDOWN = function()
 		echo $asd;
 		exit;
 	}
-		
+	
 	header("status_code: {$RESPONSE_ARRAY["status_code"]}");
 	
+	// If there is some leftover buffer, send it too
 	if(strlen($contents) > 0)
 		$RESPONSE_ARRAY['message'] = $contents;
+	
+	// Now send the decryption keys
+	$RESPONSE_ARRAY['release_info'] = [];
+	
+	if(npps_config('SEND_RELEASE_INFO'))
+		foreach(npps_decryption_key() as $id => $key)
+			$RESPONSE_ARRAY['release_info'][] = ['id' => $id, 'key' => $key];
 	
 	ob_end_clean();
 	ob_start('ob_gzhandler');
@@ -387,21 +396,20 @@ if(!defined('WEBVIEW'))
 			date_default_timezone_set(DEFAULT_TIMEZONE);
 		
 		/* Check if it's maintenance */
-		if(file_exists("Maintenance") || file_exists("Maintenance.txt") ||
-		   file_exists("maintenance") || file_exists("maintenance.txt")
+		if($MAINTENANCE_MODE = (file_exists("Maintenance") || file_exists("Maintenance.txt") ||
+								file_exists("maintenance") || file_exists("maintenance.txt"))
 		)
 		{
-			header("Maintenance: 1");
-			$MAINTENANCE_MODE = true;
+			header('Maintenance: 1');
 			exit;
 		}
 		
 		/* Check the authorize */
-		if(isset($REQUEST_HEADERS["authorize"]))
-			$AUTHORIZE_DATA = authorize_function($REQUEST_HEADERS["authorize"]);
+		if(isset($REQUEST_HEADERS['authorize']))
+			$AUTHORIZE_DATA = authorize_function($REQUEST_HEADERS['authorize']);
 		if($AUTHORIZE_DATA === false)
 		{
-			echo "Authorize header needed!";
+			echo 'Authorize header needed!';
 			exit;
 		}
 		$TOKEN = $AUTHORIZE_DATA["token"] ?? NULL;
