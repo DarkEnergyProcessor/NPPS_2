@@ -4,6 +4,8 @@
  * User-related common functions
  */
 
+/// \file include.user.php
+
 /* Creates new user. For /login/startUp */
 /* Returns the User ID or 0 if fail */
 function user_create(string $key, string $pwd): int

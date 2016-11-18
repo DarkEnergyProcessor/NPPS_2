@@ -18,7 +18,8 @@ $DATABASE = require('database_wrapper.php');
 ob_start('ob_gzhandler');
 register_shutdown_function('ob_end_flush');
 
-function main()
+/// \brief NPPS WebView main function
+function webview_main()
 {
 	global $DATABASE;
 	global $REQUEST_HEADERS;
@@ -35,12 +36,10 @@ function main()
 	exit;
 }
 
-if(defined("REQUIRE_AUTHORIZE"))
+if(npps_config('REQUIRE_AUTHORIZE'))
 {
 	if(isset($REQUEST_HEADERS["authorize"]) &&
-	   isset($REQUEST_HEADERS["user-id"]) &&
-	   isset($REQUEST_HEADERS["application-id"]) && strcmp($REQUEST_HEADERS["application-id"], APPLICATION_ID) == 0 &&
-	   isset($REQUEST_HEADERS["region"]) && $REQUEST_HEADERS["region"] == REGION
+	   isset($REQUEST_HEADERS["user-id"])
 	)
 	{
 		$auth_data = authorize_function($REQUEST_HEADERS["authorize"]);
@@ -50,7 +49,7 @@ if(defined("REQUIRE_AUTHORIZE"))
 			if(isset($auth_data["nonce"]) && strcmp($auth_data["nonce"], "WV0") == 0 &&
 			   isset($auth_data["token"]) && token_exist(strval($auth_data["token"]))
 			)
-				main();
+				webview_main();
 			else
 				exit;
 		}
@@ -61,6 +60,6 @@ if(defined("REQUIRE_AUTHORIZE"))
 		exit;
 }
 else
-	main();
+	webview_main();
 
 ?>
