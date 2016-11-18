@@ -1,11 +1,17 @@
 <?php
 /*
- * SIF Private server
+ * Null-Pointer Private Server
  * Provides database support. MySQL or SQLite3 can be used as the database backend.
  */
 
-if(!defined("MAIN_INVOKED")) exit;
+/// \file database_wrapper.php
 
+if(!defined('MAIN_INVOKED')) exit;
+
+/// \brief Internal function to initialize NPPS for the first time
+/// \param db The main database wrapper
+/// \param direct_db The bare handle of the database
+/// \exception Exception Thrown if database can't be initialized.
 function common_initialize_environment(DatabaseWrapper $db, $direct_db = NULL)
 {
 	npps_begin_transaction();
@@ -23,31 +29,33 @@ $GLOBALS['common_sqlite3_concat_function'] = function(string ...$arg): string
 	return implode($arg);
 };
 
-/* This class must be inherited */
+/// \brief Abstract class of the NPPS database wrapper
 abstract class DatabaseWrapper
 {
-	/* The db handle. Can be handle to MySQL connection or SQLite database file */
+	/// The db handle. Can be handle to MySQL connection or SQLite database file
 	protected $db_handle;
+	/// The database ID. Automatically generated
 	protected $db_id;
 	
 	abstract function __construct();
 	
-	/* Initialize the database for the first time */
+	/// Initialize the database for the first time
 	abstract public function initialize_environment();
 	
-	/* Returns array if it returns table or "true" if it's not (but the query success) */
-	/* Returns false if the query is failed */
-	/* The additional argument is there to supply values. You must use ?, ?, ... in query */
-	/* to pass values to INSERT, UPDATE, ... */
-	/* values can be single value of array that contain everything or can be passed */
-	/* as function argument. If there's multiple SELECT, only the first result are returned */
+	/// \brief Execute query, additionally prepared.
+	/// \param query The SQL string
+	/// \param types The prepared statement value types or NULL if prepared statement is not used.
+	/// \param values Value to be passed in the prepared statement
+	/// \returns Array if it returns table or `true` if it's not (but the query success).
+	///          `false` if the query is failed.
+	/// \note If there's multiple SELECT, only the first result is returned
 	abstract public function query(string $query, string $types = NULL, ...$values);
 	
-	/* Returns string representation of this database wrapper */
+	/// \brief Returns string representation of this database wrapper
 	abstract public function __toString();
 	
-	/* Create custom ordering SQL string */
-	public function custom_ordering(string $field_name, ...$order): string
+	/// \brief Create custom ordering SQL string
+	static public function custom_ordering(string $field_name, ...$order): string
 	{
 		if(is_array($order[0]))
 			$order = $order[0];
@@ -70,13 +78,14 @@ abstract class DatabaseWrapper
 		return implode(' ', $out);
 	}
 	
-	/* Closes the database handle */
+	/// \brief Closes the database handle
 	function __destruct() {}
 };
 
 /*****************************************
 ** Database Wrapper: MySQL Wrapper      **
 *****************************************/
+/// \brief NPPS MySQL database backend wrapper
 class MySQLDatabaseWrapper extends DatabaseWrapper
 {
 	function __construct()
@@ -252,6 +261,7 @@ class MySQLDatabaseWrapper extends DatabaseWrapper
 /*****************************************
 ** Database Wrapper: SQLite3 Wrapper    **
 *****************************************/
+/// \brief NPPS SQLite3 database backend wrapper
 class SQLite3DatabaseWrapper extends DatabaseWrapper
 {
 	protected $custom_filename;

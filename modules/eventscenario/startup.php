@@ -9,10 +9,7 @@ $event_scenario_id = intval($REQUEST_DATA['event_scenario_id'] ?? 0);
 $pseudo_event_id = intdiv($event_scenario_id - 1, 5) - 9;
 
 if($event_scenario_id < 1 || $event_scenario_id > 45)
-{
-	echo 'Invalid eventscenario ID!';
-	return false;
-}
+	return ERROR_CODE_SUBSCENARIO_NOT_FOUND;
 
 return [
 	[

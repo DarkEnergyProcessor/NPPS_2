@@ -1,5 +1,7 @@
 *
 !npps.ini
+!decryption_key.ini
+!secretbox*
 !*.sql
 !*.db_
 !event/

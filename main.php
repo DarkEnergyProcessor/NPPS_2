@@ -4,41 +4,12 @@
  * Copyright © 2037 Dark Energy Processor Corporation
  */
 
-/** @@ SIF Error Codes @@ **/
-define('ERROR_CODE_NO_ERROR', 0);       // OK
-define('ERROR_CODE_LIB_ERROR', 1);      // Lib error
-define('ERROR_CODE_LOGIN_INVALID', 407);	// Invalid credentials
-define('ERROR_CODE_NETWORK_ERROR', 501);        // Network error
-define('ERROR_CODE_LOGIN_FAILED', 502); // Login failed
-define('ERROR_CODE_UNAVAILABLE', 503);  // Unavailable
-define('ERROR_CODE_TIMEOUT', 504);      // Server error
-define('ERROR_CODE_GAME_LOGIC_ERROR', 1001);    // Game logic error
-define('ERROR_CODE_DUPLICATE_USER_NAME', 1100); // The name is used by another user.
-define('ERROR_CODE_UNAVAILABLE_WORDS', 1101);   // Unavailable words are contained.
-define('ERROR_CODE_ENERGY_FULL', 1102);
-define('ERROR_CODE_NOT_ENOUGH_LOVECA', 1103);
-define('ERROR_CODE_INCENTIVE_NONE', 1201);      // indentive none
-define('ERROR_CODE_OPEN_OTHERS', 1202); // Open other's incentive
-define('ERROR_ALLIANCE_DUMMY', 1900);   // alliance api failure
-define('ERROR_ALLIANCE_DUMMY2', 1901);  // alliance api failure
-define('ERROR_ALLIANCE_DUMMY3', 1902);  // alliance api failure
-define('ERROR_CODE_SCENARIO_NOT_FOUND', 2300);  // scenario data not found
-define('ERROR_CODE_SUBSCENARIO_NOT_FOUND', 2301);
-define('ERROR_CODE_TEST', 2800);
-define('ERROR_CODE_TEST2', 2801);
-define('ERROR_CODE_LIVE_NOT_FOUND', 3400);
-define('ERROR_CODE_LIVE_NOT_ENOUGH_MAX_ENERGY', 3401);
-define('ERROR_CODE_LIVE_NOT_ENOUGH_CURRENT_ENERGY', 3402);
-define('ERROR_CODE_LIVE_NOT_ENOUGH_LOVECA', 3403);
-define('ERROR_CODE_LIVE_NOT_ENOUGH_TOKEN', 3412);
-define('ERROR_HANDOVER_EXPIRE', 4401);
-define('ERROR_HANDOVER_NONE', 4402);
-define('ERROR_HANDOVER_SELF', 4403);
-/** !! SIF Error Codes !! **/
+/// \file main.php
 
-define('MAIN_INVOKED', true, true);
+require_once('error_codes.php');
+define('MAIN_INVOKED', '0.0.1 alpha', true);
 
-/* Hopefully nginx fix. Source: http://www.php.net/manual/en/function.getallheaders.php#84262 */
+// Fixes nginx. Source: http://www.php.net/manual/en/function.getallheaders.php#84262
 if(!function_exists('getallheaders'))
 {
 	function getallheaders(): array
@@ -78,6 +49,7 @@ set_exception_handler(function($x)
 	throw $x;
 });
 
+/// \brief Function to handle shutdown procedure
 $HANDLER_SHUTDOWN = function()
 {
 	global $MAINTENANCE_MODE;
@@ -143,6 +115,17 @@ $HANDLER_SHUTDOWN = function()
 	exit;
 };
 
+/// \brief NPPS main script handler. Not merged to main() to prevent variables pollution
+/// \param BUNDLE Bundle-Version value from header
+/// \param USER_ID Player user ID
+/// \param TOKEN Player token
+/// \param OS OS value from header
+/// \param PLATFORM_ID Platform-Type value from header
+/// \param OS_VERSION OS-Version value from header
+/// \param TIMEZONE TimeZone value from header
+/// \param module module/handler to be accessed
+/// \param action action in module/handler to be accessed. NULL if module is `api`
+/// \returns `true` if request success, `false` otherwise.
 $MAIN_SCRIPT_HANDLER = function(string $BUNDLE, int& $USER_ID, $TOKEN, string $OS, int $PLATFORM_ID, string $OS_VERSION, string $TIMEZONE, string $module, $action = NULL): bool
 {
 	global $REQUEST_HEADERS;
@@ -339,21 +322,22 @@ $MAIN_SCRIPT_HANDLER = function(string $BUNDLE, int& $USER_ID, $TOKEN, string $O
 	}
 };
 
-/* Returns string if array is supplied; Returns array if string is supplied */
-/* Returns false if the authorize parameter is invalid */
+/// \brief Function to process Authorize header
+/// \returns Returns string if array is supplied. Returns array if string is supplied.
+///          **Returns false if the authorize parameter is invalid**
 function authorize_function($authorize)
 {
 	if(is_array($authorize))
 	{
-		/* Assemble authorize string */
+		// Assemble authorize string
 		return http_build_query($authorize);
 	}
 	elseif(is_string($authorize))
 	{
-		/* Disassemble authorize string */
+		// Disassemble authorize string
 		parse_str($authorize, $new_assemble);
 		
-		/* Check the authorize string */
+		// Check the authorize string
 		if(
 			(isset($new_assemble["consumerKey"]) && strcmp($new_assemble["consumerKey"], CONSUMER_KEY) == 0) &&
 			(isset($new_assemble["version"]) && strcmp($new_assemble["version"], "1.1") == 0) &&
@@ -374,6 +358,7 @@ npps_config();
 
 if(!defined('WEBVIEW'))
 {
+/// NPPS main function. Preparation to process user request is done here
 	function main()
 	{
 		global $MAINTENANCE_MODE;
