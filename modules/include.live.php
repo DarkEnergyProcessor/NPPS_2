@@ -4,6 +4,8 @@
  * Live shows!
  */
 
+/// \file include.live.php
+
 function live_unlock(int $user_id, int $live_id): bool
 {
 	global $DATABASE;

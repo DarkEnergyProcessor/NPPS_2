@@ -356,159 +356,159 @@ require_once('modules/include.php');
 // Initialize configuration
 npps_config();
 
-if(!defined('WEBVIEW'))
+/// \brief NPPS main function. Preparation to process user request is done here
+function npps_main()
 {
-/// NPPS main function. Preparation to process user request is done here
-	function main()
+	global $MAINTENANCE_MODE;
+	global $REQUEST_HEADERS;
+	global $REQUEST_SUCCESS;
+	global $RESPONSE_ARRAY;
+	global $DATABASE;
+	global $MAIN_SCRIPT_HANDLER;
+	
+	// Will be modified later by the server_api handler
+	$USER_ID = 0;
+	$TOKEN = NULL;
+	$AUTHORIZE_DATA = NULL;
+	
+	$MODULE_TARGET = NULL;
+	$ACTION_TARGET = NULL;
+	
+	/* Set timezone */
+	if(npps_config('DEFAULT_TIMEZONE'))
+		date_default_timezone_set(DEFAULT_TIMEZONE);
+	
+	/* Check if it's maintenance */
+	if($MAINTENANCE_MODE = (file_exists("Maintenance") || file_exists("Maintenance.txt") ||
+							file_exists("maintenance") || file_exists("maintenance.txt"))
+	)
 	{
-		global $MAINTENANCE_MODE;
-		global $REQUEST_HEADERS;
-		global $REQUEST_SUCCESS;
-		global $RESPONSE_ARRAY;
-		global $DATABASE;
-		global $MAIN_SCRIPT_HANDLER;
-		
-		// Will be modified later by the server_api handler
-		$USER_ID = 0;
-		$TOKEN = NULL;
-		$AUTHORIZE_DATA = NULL;
-		
-		$MODULE_TARGET = NULL;
-		$ACTION_TARGET = NULL;
-		
-		/* Set timezone */
-		if(npps_config('DEFAULT_TIMEZONE'))
-			date_default_timezone_set(DEFAULT_TIMEZONE);
-		
-		/* Check if it's maintenance */
-		if($MAINTENANCE_MODE = (file_exists("Maintenance") || file_exists("Maintenance.txt") ||
-								file_exists("maintenance") || file_exists("maintenance.txt"))
-		)
-		{
-			header('Maintenance: 1');
-			exit;
-		}
-		
-		/* Check the authorize */
-		if(isset($REQUEST_HEADERS['authorize']))
-			$AUTHORIZE_DATA = authorize_function($REQUEST_HEADERS['authorize']);
-		if($AUTHORIZE_DATA === false)
-		{
-			echo 'Authorize header needed!';
-			exit;
-		}
-		$TOKEN = $AUTHORIZE_DATA["token"] ?? NULL;
-		
-		/* Check the bundle version */
-		if(!isset($REQUEST_HEADERS["bundle-version"]))
-		{
-			echo 'Bundle-Version header needed!';
-			exit;
-		}
-		
-		/* Check if client-version is OK */
-		if(isset($REQUEST_HEADERS["client-version"]))
-		{
-			if(npps_config('SERVER_VERSION'))
-			{
-				//header("Server-Version: ".SERVER_VERSION);
-				$ver1 = explode('.', SERVER_VERSION);
-				$ver2 = explode('.', $REQUEST_HEADERS["client-version"]);
-				$trigger_version_up = NULL;
-				
-				for($i = 0; $i < 3; $i++)
-				{
-					if(strcmp($ver1[$i], '*') != 0 && $ver1[$i] != $ver2[$i])
-					{
-						$trigger_version_up = str_replace('*', '0', SERVER_VERSION);
-						break;
-					}
-				}
-				
-				$trigger_version_up = $trigger_version_up ?? $REQUEST_HEADERS["client-version"] ?? SERVER_VERSION;
-				header("Server-Version: $trigger_version_up");
-			}
-			else
-				header("Server-Version: {$REQUEST_HEADERS["client-version"]}");
-		}
-		else
-		{
-			echo "Client-Version header needed!";
-			exit;
-		}
-		
-		/* get the module and the action. Use different scope */
-		{
-			preg_match('!main.php/(\w+)/?(\w*)!', $_SERVER["REQUEST_URI"], $x);
-			
-			if(isset($x[1]))
-				$MODULE_TARGET = $x[1];
-			else
-			{
-				echo "Module needed!";
-				exit;
-			}
-			
-			if(isset($x[2]) && strlen($x[2]) > 0)
-				$ACTION_TARGET = $x[2];
-		}
-		
-		if(isset($REQUEST_HEADERS['user-id']) || isset($AUTHORIZE_DATA['user_id']))
-		{
-			if(isset($REQUEST_HEADERS['user-id']))
-				if(preg_match('/\d+/', $REQUEST_HEADERS['user-id']) == 1)
-					$USER_ID = intval($REQUEST_HEADERS['user-id']);
-				else
-				{
-					echo 'Invalid user ID';
-					exit;
-				}
-		}
-		
-		
-		/* Load database wrapper and initialize it */
-		$DATABASE = require('database_wrapper.php');
-		$DATABASE->initialize_environment();
-		
-		/* Call handler. Parameters: bundle-version, user_id, token, os, platform-id, os-version, time-zone = "unknown", module = "api", action = NULL */
-		$REQUEST_SUCCESS = $MAIN_SCRIPT_HANDLER(
-			$REQUEST_HEADERS["bundle-version"],
-			$USER_ID,
-			$TOKEN,
-			$REQUEST_HEADERS["os"] ?? "unknown",
-			$REQUEST_HEADERS["platform-type"] ?? -1,
-			$REQUEST_HEADERS["os-version"] ?? "unknown",
-			$REQUEST_HEADERS["time-zone"] ?? "unknown",
-			$MODULE_TARGET ?? "api",
-			$ACTION_TARGET
-		);
-		
-		/* Check if user id changed */
-		if($USER_ID > 0)
-			header("user_id: $USER_ID");
-		
-		/* Reassemble authorize function */
-		{
-			$new_authorize = [];
-			
-			foreach($AUTHORIZE_DATA as $k => $v)
-				$new_authorize[$k] = $v;
-			
-			$new_authorize["requestTimeStamp"] = $new_authorize["timeStamp"];
-			$new_authorize["timeStamp"] = time();
-			$new_authorize["user_id"] = $USER_ID > 0 ? $USER_ID : "";
-			
-			if(is_string($TOKEN))
-				$new_authorize["token"] = $TOKEN;
-			
-			header(sprintf("authorize: %s", authorize_function($new_authorize)));
-		}
-		
-		/* Exit. Let the shutdown function do the rest */
+		header('Maintenance: 1');
 		exit;
 	}
+	
+	/* Check the authorize */
+	if(isset($REQUEST_HEADERS['authorize']))
+		$AUTHORIZE_DATA = authorize_function($REQUEST_HEADERS['authorize']);
+	if($AUTHORIZE_DATA === false)
+	{
+		echo 'Authorize header needed!';
+		exit;
+	}
+	$TOKEN = $AUTHORIZE_DATA["token"] ?? NULL;
+	
+	/* Check the bundle version */
+	if(!isset($REQUEST_HEADERS["bundle-version"]))
+	{
+		echo 'Bundle-Version header needed!';
+		exit;
+	}
+	
+	/* Check if client-version is OK */
+	if(isset($REQUEST_HEADERS["client-version"]))
+	{
+		if(npps_config('SERVER_VERSION'))
+		{
+			//header("Server-Version: ".SERVER_VERSION);
+			$ver1 = explode('.', SERVER_VERSION);
+			$ver2 = explode('.', $REQUEST_HEADERS["client-version"]);
+			$trigger_version_up = NULL;
+			
+			for($i = 0; $i < 3; $i++)
+			{
+				if(strcmp($ver1[$i], '*') != 0 && $ver1[$i] != $ver2[$i])
+				{
+					$trigger_version_up = str_replace('*', '0', SERVER_VERSION);
+					break;
+				}
+			}
+			
+			$trigger_version_up = $trigger_version_up ?? $REQUEST_HEADERS["client-version"] ?? SERVER_VERSION;
+			header("Server-Version: $trigger_version_up");
+		}
+		else
+			header("Server-Version: {$REQUEST_HEADERS["client-version"]}");
+	}
+	else
+	{
+		echo "Client-Version header needed!";
+		exit;
+	}
+	
+	/* get the module and the action. Use different scope */
+	{
+		preg_match('!main.php/(\w+)/?(\w*)!', $_SERVER["REQUEST_URI"], $x);
+		
+		if(isset($x[1]))
+			$MODULE_TARGET = $x[1];
+		else
+		{
+			echo "Module needed!";
+			exit;
+		}
+		
+		if(isset($x[2]) && strlen($x[2]) > 0)
+			$ACTION_TARGET = $x[2];
+	}
+	
+	if(isset($REQUEST_HEADERS['user-id']) || isset($AUTHORIZE_DATA['user_id']))
+	{
+		if(isset($REQUEST_HEADERS['user-id']))
+			if(preg_match('/\d+/', $REQUEST_HEADERS['user-id']) == 1)
+				$USER_ID = intval($REQUEST_HEADERS['user-id']);
+			else
+			{
+				echo 'Invalid user ID';
+				exit;
+			}
+	}
+	
+	
+	/* Load database wrapper and initialize it */
+	$DATABASE = require('database_wrapper.php');
+	$DATABASE->initialize_environment();
+	
+	/* Call handler. Parameters: bundle-version, user_id, token, os, platform-id, os-version, time-zone = "unknown", module = "api", action = NULL */
+	$REQUEST_SUCCESS = $MAIN_SCRIPT_HANDLER(
+		$REQUEST_HEADERS["bundle-version"],
+		$USER_ID,
+		$TOKEN,
+		$REQUEST_HEADERS["os"] ?? "unknown",
+		$REQUEST_HEADERS["platform-type"] ?? -1,
+		$REQUEST_HEADERS["os-version"] ?? "unknown",
+		$REQUEST_HEADERS["time-zone"] ?? "unknown",
+		$MODULE_TARGET ?? "api",
+		$ACTION_TARGET
+	);
+	
+	/* Check if user id changed */
+	if($USER_ID > 0)
+		header("user_id: $USER_ID");
+	
+	/* Reassemble authorize function */
+	{
+		$new_authorize = [];
+		
+		foreach($AUTHORIZE_DATA as $k => $v)
+			$new_authorize[$k] = $v;
+		
+		$new_authorize["requestTimeStamp"] = $new_authorize["timeStamp"];
+		$new_authorize["timeStamp"] = time();
+		$new_authorize["user_id"] = $USER_ID > 0 ? $USER_ID : "";
+		
+		if(is_string($TOKEN))
+			$new_authorize["token"] = $TOKEN;
+		
+		header(sprintf("authorize: %s", authorize_function($new_authorize)));
+	}
+	
+	/* Exit. Let the shutdown function do the rest */
+	exit;
+}
 
+if(!defined('WEBVIEW'))
+{
 	register_shutdown_function($HANDLER_SHUTDOWN);
 	ob_start();
-	main();
+	npps_main();
 }

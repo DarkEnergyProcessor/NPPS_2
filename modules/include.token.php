@@ -4,6 +4,8 @@
  * Token-related functions, for login.
  */
 
+/// \file include.token.php
+
 /* Creates token */
 function token_generate(): string
 {

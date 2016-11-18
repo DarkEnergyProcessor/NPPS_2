@@ -3,8 +3,8 @@
 *.html
 *.so
 *.sql
-doc
 .sqlite3_initialized
+docs
 my.php
 web.config
 .htaccess

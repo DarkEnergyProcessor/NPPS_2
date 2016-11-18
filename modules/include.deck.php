@@ -1,7 +1,10 @@
 <?php
-/* Null Pointer Private Server
+/*
+ * Null Pointer Private Server
  * Deck alteration
  */
+
+/// \file include.deck.php
 
 /* Returns 0 if not in deck, 1 if in deck (but not main), 2 if in main deck */
 function deck_card_in_deck(int $user_id, int $unit_id): int
