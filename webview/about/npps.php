@@ -86,6 +86,7 @@ endif;
 							<div style="text-align: left">
 							   <p>
 									Null-Pointer Private Server<br/>
+									Version <?=MAIN_INVOKED;?><br/>
 									Running under <?=$_SERVER['SERVER_SOFTWARE'] ?? $_SERVER['SOFTWARE'];?> with PHP <?=PHP_VERSION;?><br/>
 									<br/>
 									<br/>

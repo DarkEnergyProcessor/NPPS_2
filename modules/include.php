@@ -4,25 +4,32 @@
  * Contains common functions
  */
 
-function strpos_array(string $haystack, array $needles) {
-	if(is_array($needles)) {
-		if(count($needles) == 0)
-			return false;
-		foreach ($needles as $str) {
-			if ( is_array($str) ) {
-				$pos = strpos_array($haystack, $str);
-			} else {
-				$pos = strpos($haystack, $str);
-			}
-			if ($pos !== FALSE) {
-				return $pos;
-			}
-		}
-	} else {
-		return strpos($haystack, $needles);
+/// \file include.php
+
+/// \brief Same as strpos() but accepts array as the neddles.
+/// \param haystack The string to search in
+/// \param needles List of string to be searched
+/// \returns Position of string occured, or false if not found
+function strpos_array(string $haystack, array $needles)
+{
+	if(count($needles) == 0)
+		return false;
+	
+	foreach($needles as $str) {
+		if(is_array($str))
+			$pos = strpos_array($haystack, $str);
+		else
+			$pos = strpos($haystack, $str);
+		
+		if($pos !== false)
+			return $pos;
 	}
 }
 
+/// \brief Converts UNIX timestamp to SIF-compilant datetime relative to **local server** time.
+/// \param timestamp UNIX timestamp to convert
+/// \returns SIF-compilant datetime strong
+/// \note The result datetime always starts at January 2nd 1970.
 function to_datetime(int $timestamp): string
 {
 	if($timestamp < 86400) $timestamp += 86400;
@@ -30,6 +37,10 @@ function to_datetime(int $timestamp): string
 	return date('Y-m-d H:i:s', $timestamp);
 }
 
+/// \brief Converts UNIX timestamp to SIF-compilant datetime relative to UTC time.
+/// \param timestamp UNIX timestamp to convert
+/// \returns SIF-compilant datetime strong
+/// \note The result datetime always starts at January 2nd 1970.
 function to_utcdatetime(int $timestamp): string
 {
 	if($timestamp < 86400) $timestamp += 86400;
@@ -37,9 +48,14 @@ function to_utcdatetime(int $timestamp): string
 	return gmdate('Y-m-d H:i:s', $timestamp);
 }
 
-function time_elapsed_string(int $datetime, bool $full = false): string {
+/// \brief Converts timestamp to string which gives human readable representation of time difference (like 2d ago, ...).
+/// \param timestamp UNIX timestamp to convert
+/// \param full Do not use single letter for time identification (like d = day)?
+/// \returns Human readable string
+function time_elapsed_string(int $timestamp, bool $full = false): string
+{
 	$now = new DateTime;
-	$ago = new DateTime("@$datetime");
+	$ago = new DateTime("@$timestamp");
 	$diff = $now->diff($ago);
 
 	$diff->w = floor($diff->d / 7);
@@ -66,7 +82,10 @@ function time_elapsed_string(int $datetime, bool $full = false): string {
 	return $string ? implode(', ', $string) . ' ago' : 'just now';
 }
 
-// Get SQLite3 database handle
+/// \brief Get database handle of specificed database.
+/// \param db_name The database name to get it's handle
+/// \returns DatabaseWrapper object.
+/// \sa DatabaseWrapper
 function npps_get_database(string $db_name = ''): DatabaseWrapper
 {
 	static $db_list = [];
@@ -83,7 +102,11 @@ function npps_get_database(string $db_name = ''): DatabaseWrapper
 	}
 }
 
-// Attach database from npps_get_database() if not attached.
+/// \brief Attach database from npps_get_database() if not attached.
+/// \param db Database handle
+/// \param another_db Database name to attach
+/// \param db_list Lists of another database name to attach
+/// \note This function does nothing if main database is specificed.
 function npps_attach_database(DatabaseWrapper $db, string $another_db, string ...$db_list)
 {
 	static $attached_db = [];
@@ -112,7 +135,11 @@ function npps_attach_database(DatabaseWrapper $db, string $another_db, string ..
 	}
 }
 
-// Equivalent to $DATABASE->query(...)
+/// \brief Executes query in main database. Equivalent to $DATABASE->query()
+/// \param query SQL query
+/// \param list datatype list if prepared statement is used. Follows MySQL datatype character
+/// \param arglist argument list passed to prepared statement (if used)
+/// \returns The result of the query
 function npps_query(string $query, string $list = NULL, ...$arglist)
 {
 	$DATABASE = $GLOBALS['DATABASE'];
@@ -123,8 +150,11 @@ function npps_query(string $query, string $list = NULL, ...$arglist)
 		return $DATABASE->query($query);
 }
 
-// Similar to npps_query, but specify SQL file and variables to be substituted inside
-// And also no prepared statement as it might contain multiple statements
+/// \brief Similar to npps_query, but specify SQL file and variables to be substituted inside.
+///        Prepared statement is not supported as it might contain multiple statements.
+/// \param filename filename which contains the SQL string
+/// \param variable_list PHP variables to be substituted inside the SQL string
+/// \returns The result of the query
 function npps_file_query(string $filename, array $variable_list = [])
 {
 	$__x = file_get_contents($filename);
@@ -143,7 +173,10 @@ DATA
 	return npps_query($__res);
 }
 
-// Like explode, but converts value to number if necessary
+/// \brief Like explode, but converts value to number if necessary
+/// \param delimiter The boundary string
+/// \param str The input string
+/// \returns Splitted strings as array.
 function npps_separate(string $delimiter, string $str): array
 {
 	if(strlen($str) > 0)
@@ -162,7 +195,8 @@ function npps_separate(string $delimiter, string $str): array
 	return [];
 }
 
-// Get server hostname (and port if necessary)
+/// \brief Get server hostname (and port if necessary)
+/// \returns Server hostname, and port if it's not hosted in usual port.
 function npps_gethost(): string
 {
 	static $cached_result = NULL;
@@ -173,13 +207,15 @@ function npps_gethost(): string
 	if(isset($_SERVER['HTTP_HOST']))
 		return $cached_result = $_SERVER['HTTP_HOST'];
 	
-	if($_SERVER['SERVER_PORT'] == 80)
+	if($_SERVER['SERVER_PORT'] == ($_SERVER['HTTPS'] ? 443 : 80))
 		return $cached_result = $_SERVER['REMOTE_ADDR'];
 	else
 		return $cached_result = sprintf('%s:%d', $_SERVER['REMOTE_ADDR'], $_SERVER['SERVER_PORT']);
 }
 
-// Sets HTTP response
+/// \brief Sets HTTP response, with an additional custom response message
+/// \param response_code Response code to set
+/// \param response_message Custom response message to set
 function npps_http_code(int $response_code, string $response_message = '')
 {
 	http_response_code($response_code);
@@ -188,6 +224,7 @@ function npps_http_code(int $response_code, string $response_message = '')
 		header($_SERVER['SERVER_PROTOCOL']." $response_code $response_message");
 }
 
+/// \brief Class used for npps_begin_transaction(), npps_end_transaction(), and npps_commit_transaction()
 final class npps_nested_transaction
 {
 	private $nested_count = 0;
@@ -244,22 +281,31 @@ final class npps_nested_transaction
 	}
 };
 
+/// \brief Starts transaction. The internal counter is added by 1.
+/// \exception Exception if the transaction is unbalanced
 function npps_begin_transaction()
 {
 	npps_nested_transaction::instance()->begin();
 }
 
+/// \brief Ends transaction. The internal counter is subtracted by 1.
+///        If internal counter reaches zero, then transaction to DB is started.
+/// \exception Exception Thrown if the transaction is unbalanced (called without npps_begin_transaction())
 function npps_end_transaction()
 {
 	npps_nested_transaction::instance()->commit();
 }
 
+/// \brief Identical to npps_commit_transaction(), but always starts transaction to DB and set internal counter to 0.
 function npps_commit_transaction()
 {
 	npps_nested_transaction::instance()->commit_force();
 }
 
-// Get configuration value or NULL
+/// \brief Get configuration value from configuration file(npps.ini)
+/// \param config_name The configuration name
+/// \param access_outside Makes the configuration to allow access to all configurations
+/// \returns Value of the configuration (can be NULL) or NULL if configuration name is not exists.
 function npps_config(string $config_name = '', bool $access_outside = false)
 {
 	static $config_list = NULL;
@@ -345,9 +391,10 @@ function npps_config(string $config_name = '', bool $access_outside = false)
 	}
 }
 
-// Calls module/action (and only module, not handler) and returns it's value
-// Returns integer if request can't be statisfied.
-// Returns NULL on failure
+/// \brief Calls module/action (and only module, not handler) and returns it's response.
+/// \param module_action <module>/<action> to be called
+/// \param request_data The module request_data, if any
+/// \returns Array of the response if request is success, integer if request can't be statisfied, or NULL on failure.
 function npps_call_module(string $module_action, array $request_data = [])
 {
 	global $REQUEST_HEADERS;
@@ -389,7 +436,10 @@ function npps_call_module(string $module_action, array $request_data = [])
 		return NULL;
 }
 
-// Get decryption key of SIF v4.0.x
+/// \brief Get decryption key (v4.0.x only)
+/// \param index The decryption key ID
+/// \param raw Base64 decode the decryption key first?
+/// \returns Base64 encoded string (if raw is false) of the decryption key.
 function npps_decryption_key(int $index = 0, bool $raw = true)
 {
 	static $decryption_key_list = NULL;
@@ -413,7 +463,7 @@ function npps_decryption_key(int $index = 0, bool $raw = true)
 		return NULL;
 }
 
-require('modules/include.card.php');
+require('modules/include.unit.php');
 require('modules/include.deck.php');
 require('modules/include.item.php');
 require('modules/include.live.php');

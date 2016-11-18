@@ -3,6 +3,7 @@
 *.html
 *.so
 *.sql
+doc
 .sqlite3_initialized
 my.php
 web.config

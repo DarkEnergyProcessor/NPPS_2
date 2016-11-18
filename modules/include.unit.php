@@ -1,11 +1,16 @@
 <?php
-/*
+/* 
  * Null Pointer Private Server
  * Card addition and removal
  */
 
-/* It adds immediately without checking if the member is full */
-function card_add_direct(int $user_id, int $card_id): int
+/// \file include.unit.php
+
+/// \brief Add unit to current player memerlist **without checking if player memberlist is full**.
+/// \param user_id Player User ID
+/// \param card_id The unit ID to add.
+/// \returns unit_owning_user_id or 0 on failure.
+function unit_add_direct(int $user_id, int $card_id): int
 {
 	global $DATABASE;
 	global $UNIX_TIMESTAMP;
@@ -43,9 +48,11 @@ function card_add_direct(int $user_id, int $card_id): int
 		return 0;
 }
 
-/* Also removes it from deck */
-/* Returns true if removed, false if it's in main deck */
-function card_remove(int $user_id, int $unit_own_id): bool
+/// \brief Removes unit in user memberlist. Also removes it in deck if necessary.
+/// \param user_id Player user ID
+/// \param unit_own_id The unit owning user ID
+/// \returns `true` if success and removed, `false` if it's in main deck and not removed.
+function unit_remove(int $user_id, int $unit_own_id): bool
 {
 	global $DATABASE;
 	
@@ -62,10 +69,10 @@ function card_remove(int $user_id, int $unit_own_id): bool
 			if($unit == $unit_own_id)
 			{
 				if($info[2] == $a[0])
-					/* In main deck. Cannot remove */
+					// In main deck. Cannot remove
 					return false;
 				else
-					/* Remove */
+					// Remove
 					$unit = 0;
 			}
 		}
@@ -74,14 +81,20 @@ function card_remove(int $user_id, int $unit_own_id): bool
 	foreach($deck_list as $k => $v)
 		deck_alter($user_id, $k, $v);
 	
-	/* Last: update database */
+	// Last: update database
 	npps_query("DELETE FROM `{$info[0]}` WHERE unit_id = $unit_own_id");
 	
 	return true;
 }
 
-/* Add card (returns unit_own_user_id) or insert it to present box (returns 0) if member slot is full */
-function card_add(int $user_id, int $card_id, array $item_data = []): int
+/// \brief Add unit to current player memerlist.
+///        If it's supporting members and `UNIT_SUPPORT_ALWAYSADD` is defined in config,
+///        then this function **always** add member specificed.
+/// \param user_id Player User ID
+/// \param card_id The unit ID to add.
+/// \param item_data see item_add_present_box() for more information
+/// \returns unit_owning_user_id or 0 on failure.
+function unit_add(int $user_id, int $card_id, array $item_data = []): int
 {
 	global $DATABASE;
 	
@@ -97,8 +110,9 @@ function card_add(int $user_id, int $card_id, array $item_data = []): int
 	return card_add_direct($user_id, $card_id);
 }
 
-/* To give player card rewards after completing live or for regular scouting */
-function card_random_regular(): array
+/// \brief Used to scout member or giving player live show reward
+/// \returns SIF-compilant array for unit, randomly choosen.
+function unit_random_regular(): array
 {
 	static $n_list = [];
 	static $r_list = [];

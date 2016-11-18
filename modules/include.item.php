@@ -4,15 +4,20 @@
  * Item-related functions
  */
 
-/* Translates item IDs to this array or NULL if fail:
-	item_id
-	add_type
-	amount
-	item_category_id
-*/
-function item_translate_to_array(int $item_id, int $amount = 1, int $info_id = NULL)
+/// \file include.item.php
+
+/// \brief Translates item datas to SIF-compilant array
+/// \param add_type Item add_type value
+/// \param amount Item amount
+/// \param item_id Item ID
+/// \returns NULL if can't translate to array, or array with these keys
+///          - item_id
+///          - add_type
+///          - amount
+///          - item_category_id
+function item_translate_to_array(int $add_type, int $amount = 1, int $item_id = NULL)
 {
-	switch($item_id)
+	switch($add_type)
 	{
 		case 1000:
 		case 1001:
@@ -21,8 +26,8 @@ function item_translate_to_array(int $item_id, int $amount = 1, int $info_id = N
 				return NULL;
 			
 			return [
-				'item_id' => $info_id,
-				'add_type' => $item_id,
+				'item_id' => $item_id,
+				'add_type' => $add_type,
 				'amount' => $amount,
 				'item_category_id' => 0
 			];
@@ -31,7 +36,7 @@ function item_translate_to_array(int $item_id, int $amount = 1, int $info_id = N
 		{
 			return [
 				'item_id' => 3,
-				'add_type' => $item_id,
+				'add_type' => $add_type,
 				'amount' => $amount,
 				'item_category_id' => 3
 			];
@@ -40,7 +45,7 @@ function item_translate_to_array(int $item_id, int $amount = 1, int $info_id = N
 		{
 			return [
 				'item_id' => 4,
-				'add_type' => $item_id,
+				'add_type' => $add_type,
 				'amount' => $amount,
 				'item_category_id' => 4
 			];
@@ -49,7 +54,7 @@ function item_translate_to_array(int $item_id, int $amount = 1, int $info_id = N
 		{
 			return [
 				'item_id' => 2,
-				'add_type' => $item_id,
+				'add_type' => $add_type,
 				'amount' => $amount,
 				'item_category_id' => 2
 			];
@@ -61,8 +66,8 @@ function item_translate_to_array(int $item_id, int $amount = 1, int $info_id = N
 				return NULL;
 			
 			return [
-				'item_id' => $info_id,
-				'add_type' => $item_id,
+				'item_id' => $item_id,
+				'add_type' => $add_type,
 				'amount' => 1,
 				'item_category_id' => 0
 			];
@@ -74,20 +79,23 @@ function item_translate_to_array(int $item_id, int $amount = 1, int $info_id = N
 	}
 }
 
-/* item_data must be array with these values:
-	message - Present message. Defaults to "Present Box Item" (optional field)
-	expire - unix timestamp when the item is expired or NULL (optional field; default to NULL)
-	
-returns item_incentive_id
-*/
-function item_add_present_box(int $user_id, int $item_id, array $item_data = [], int $amount = 1, int $info_id = NULL): int
+/// \brief Add items to present box.
+/// \param user_id Player user ID
+/// \param add_type Item add_type
+/// \param item_data array with these keys
+///                  - message - Present message. Defaults to "Present Box Item" (optional field)
+///                  - expire - unix timestamp when the item is expired or NULL (optional field; default to NULL)
+/// \param amount Item amount
+/// \param item_id Additional item ID. Depends on add_type
+/// \returns Item incentive ID
+function item_add_present_box(int $user_id, int $add_type, array $item_data = [], int $amount = 1, int $item_id = NULL): int
 {
 	global $DATABASE;
 	
 	$present_table = npps_query("SELECT present_table FROM `users` WHERE user_id = $user_id")[0][0];
 	$data = [
+		$add_type,
 		$item_id,
-		$info_id,
 		$amount,
 		$item_data['message'] ?? 'Present Box Item',
 		$item_data['expire'] ?? NULL
