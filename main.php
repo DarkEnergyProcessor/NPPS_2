@@ -26,15 +26,24 @@ if(!function_exists('getallheaders'))
 	}
 } 
 
+/// Boolean value to store maintenance flag
 $MAINTENANCE_MODE = false;
+/// Array of headers that client sent
 $REQUEST_HEADERS = array_change_key_case(getallheaders(), CASE_LOWER);
+/// Flag to indicate the request is ok or not
 $REQUEST_SUCCESS = false;
+/// Array of the response data. Converted to JSON later
 $RESPONSE_ARRAY = [];
+/// Main database variable
 $DATABASE = NULL;
+/// Current timestamp in seconds since January 1st, 1970
 $UNIX_TIMESTAMP = time();
+/// SIF-compilant current datetime
 $TEXT_TIMESTAMP = date('Y-m-d H:i:s', $UNIX_TIMESTAMP);
 
+/// Temporary variable used for npps_config() to detect current module
 $CURRENT_MODULE = NULL;
+/// Temporary variable used for npps_config() to detect current action
 $CURRENT_ACTION = NULL;
 
 set_error_handler(function($errNo, $errStr, $errFile, $errLine)

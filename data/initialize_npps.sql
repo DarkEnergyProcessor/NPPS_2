@@ -1,6 +1,26 @@
 -- This file contains SQL statement to initialize NPPS for the first time.
 -- The SQL statement must be compatible both for MySQL and SQLite3
 
+CREATE TABLE `b_side_schedule` (
+	live_difficulty_id INTEGER NOT NULL PRIMARY KEY,			-- The live difficulty ID
+	start_available_time INTEGER NOT NULL DEFAULT 0,			-- When it comes? (Unix timestamp) default to "already exists"
+	end_available_time INTEGER NOT NULL DEFAULT 2147483647		-- When it leaves? (Unix timestamp) default to "never leaves"
+);
+
+CREATE TABLE `birthday_login_bonus` (
+	date VARCHAR(5) NOT NULL,	-- In DD-MM format. Login bonus ID is "(day * 12 + (month - 1)) << 16" (used when sending response only)
+	message TEXT NOT NULL,		-- Message to show in-game
+	banner TEXT NOT NULL,		-- Banner to show in-game
+	add_type INTEGER NOT NULL,	-- The add_type item ID
+	item_id INTEGER,			-- Item ID or NULL.
+	amount INTEGER NOT NULL		-- Item amout
+);
+
+CREATE TABLE `daily_rotation` (
+	live_difficulty_id INTEGER PRIMARY KEY,		-- The live ID
+	daily_category INTEGER NOT NULL				-- The daily live categoy ID.
+);
+
 CREATE TABLE `event_list` (
 	event_id INTEGER PRIMARY KEY,						-- The event ID from event_common.db_
 	start_time INTEGER NOT NULL DEFAULT 0,				-- Unix timestamp when the event start
@@ -20,6 +40,12 @@ CREATE TABLE `event_list` (
 	event_ranking_table TEXT NOT NULL,					-- The event player ranking list table.
 	event_song_table TEXT NOT NULL						-- The event song ranking list table.
 );
+
+CREATE TABLE `free_gacha_tracking` (
+	user_id INTEGER NOT NULL PRIMARY KEY,	-- User ID who execute the free gacha
+	next_free_gacha INTEGER NOT NULL		-- Unix timestamp when the next free gacha.
+);
+
 CREATE TABLE `logged_in` (
 	login_key TEXT,											-- The associated login key or NULL if stil in "authkey"
 	login_pwd TEXT,											-- The associated login password or NULL if still in "authkey"
@@ -94,14 +120,7 @@ CREATE TABLE `special_login_bonus` (
 	banner TEXT NOT NULL,							-- Banner to show in-game
 	items TEXT NOT NULL								-- Items list. Format: <add_type>:<amount>[:<item_id>],... MAX 7 for v4.0.2 and MAX 9 for v4.0.3
 );
-CREATE TABLE `birthday_login_bonus` (
-	date VARCHAR(5) NOT NULL,	-- In DD-MM format. Login bonus ID is "(day * 12 + (month - 1)) << 16" (used when sending response only)
-	message TEXT NOT NULL,		-- Message to show in-game
-	banner TEXT NOT NULL,		-- Banner to show in-game
-	add_type INTEGER NOT NULL,	-- The add_type item ID
-	item_id INTEGER,			-- Item ID or NULL.
-	amount INTEGER NOT NULL		-- Item amout
-);
+
 CREATE TABLE `sticker_shop_item` (
 	sticker_id INTEGER PRIMARY KEY AUTO_INCREMENT,	-- Sticker ID
 	add_type INTEGER NOT NULL,						-- The add_type item ID
@@ -126,10 +145,6 @@ CREATE TABLE `wip_scenario` (
 	scenario_id INTEGER DEFAULT NULL,		-- Scenario ID or NULL if it's subscenario
 	subscenario_id INTEGER DEFAULT NULL		-- Subscenario ID or NULL if it's scenario
 );
-CREATE TABLE `free_gacha_tracking` (
-	user_id INTEGER NOT NULL PRIMARY KEY,	-- User ID who execute the free gacha
-	next_free_gacha INTEGER NOT NULL		-- Unix timestamp when the next free gacha.
-);
 CREATE TABLE `notice_list` (
 	notice_id INTEGER PRIMARY KEY AUTO_INCREMENT,	-- Notice ID. Auto increment.
 	receiver_user_id INTEGER NOT NULL,				-- To user_id
@@ -139,15 +154,6 @@ CREATE TABLE `notice_list` (
 	is_new BOOL NOT NULL DEFAULT 1,					-- Is unread?
 	is_pm BOOL NOT NULL DEFAULT 0,					-- Is private message?
 	is_replied BOOL DEFAULT 0						-- Is player already replied to this message?
-);
-CREATE TABLE `b_side_schedule` (
-	live_difficulty_id INTEGER NOT NULL PRIMARY KEY,			-- The live difficulty ID
-	start_available_time INTEGER NOT NULL DEFAULT 0,			-- When it comes? (Unix timestamp) default to "already exists"
-	end_available_time INTEGER NOT NULL DEFAULT 2147483647		-- When it leaves? (Unix timestamp) default to "never leaves"
-);
-CREATE TABLE `daily_rotation` (
-	live_difficulty_id INTEGER PRIMARY KEY,		-- The live ID
-	daily_category INTEGER NOT NULL				-- The daily live categoy ID.
 );
 CREATE TABLE `live_information` (
 	live_difficulty_id INTEGER PRIMARY KEY,		-- The live ID

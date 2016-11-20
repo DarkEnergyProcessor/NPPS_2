@@ -6,8 +6,10 @@
 
 /// \file include.user.php
 
-/* Creates new user. For /login/startUp */
-/* Returns the User ID or 0 if fail */
+/// \brief Creates new user. For /login/startUp module action
+/// \param key The user key
+/// \param pwd The user internal password
+/// \returns The User ID or 0 on failure
 function user_create(string $key, string $pwd): int
 {
 	global $UNIX_TIMESTAMP;
@@ -45,8 +47,10 @@ function user_create(string $key, string $pwd): int
 	return 0;
 }
 
-/* Configure user. It supports startWithoutInvite and startSetInvite */
-/* Returns true on success, false on failure */
+/// \brief Configure user. It supports startWithoutInvite and startSetInvite
+/// \param user_id The player user ID previously created from user_create()
+/// \param invite_code Custom invite code to specify
+/// \returns `true` on success, `false` on failure (like `invite_code` already exist)
 function user_configure(int $user_id, string $invite_code = NULL): bool
 {
 	if($invite_code == NULL)

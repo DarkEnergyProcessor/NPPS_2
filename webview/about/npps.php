@@ -85,7 +85,7 @@ endif;
 						<span style="color:black;">
 							<div style="text-align: left">
 							   <p>
-									Null-Pointer Private Server<br/>
+									<img src="/resources/img/npps_logo.png"/><br/>
 									Version <?=MAIN_INVOKED;?><br/>
 									Running under <?=$_SERVER['SERVER_SOFTWARE'] ?? $_SERVER['SOFTWARE'];?> with PHP <?=PHP_VERSION;?><br/>
 									<br/>

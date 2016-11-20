@@ -1,5 +1,10 @@
 <?php
-/* SifEmu. SIF Request Emulator */
+/*
+ * Null-Pointer Private Server
+ * SifEmu, SIF Request Emulator
+ */
+
+/// \file sifemu.php
 
 class SifEmu
 {
