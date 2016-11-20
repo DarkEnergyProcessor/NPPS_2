@@ -1,15 +1,153 @@
 <?php
 /* 
  * Null Pointer Private Server
- * Card addition and removal
+ * Unit addition and removal
  */
 
 /// \file include.unit.php
 
+/// Singleton used to cache unit information
+class npps_unit_tempinfo
+{
+	/// \brief Array to store unit cache information
+	protected $unitlist;
+	
+	/// \brief Create new instance of unit cache
+	protected function __construct() {
+		$this->unitlist = [];
+	}
+	
+	/// \brief Gets singleton instance of this class
+	/// \returns Current npps_unit_tempinfo instance
+	static public function instance(): npps_unit_tempinfo
+	{
+		static $x = NULL;
+		
+		if($x == NULL)
+			$x = new npps_unit_tempinfo();
+		
+		return $x;
+	}
+	
+	/// \brief Gets unit information, decrypt the row if necessary
+	/// \param unit_id The unit ID to get it's information
+	/// \returns see unit_database_get_info()
+	public function getunit(int $unit_id)
+	{
+		if(isset($unitlist[$unit_id]))
+			return $unitlist[$unit_id];
+		
+		$unit_db = npps_get_database('unit');
+		$unit_info = $unit_db->query("SELECT * FROM `unit_m` WHERE unit_id = $unit_id");
+		
+		if(count($unit_info) == 0)
+			return NULL;
+		
+		$unit_info = $unit_info[0];
+		
+		if($unit_info['release_tag'] != NULL && is_integer($unit_info['release_tag']))
+		{
+			// Decrypt row at first
+			$decryption_id = npps_decryption_key($unit_info['release_tag']);
+			$decrypted_data = json_decode(substr(openssl_decrypt($unit_info['_encryption_release_id'], 'aes-128-cbc', 0), 16));
+			
+			if($decrypted_data == NULL)
+			{
+				error_log("npps: cannot decrypt row unit_id = $unit_id", 4);
+				echo "cannot decrypt row unit_id = $unit_id";
+				
+				return NULL;
+			}
+			
+			foreach($decrypted_data as $k => $v)
+				$unit_info[$k] = $v;
+		}
+		
+		// Remove unnecessary information
+		unset($unit_info['unit_id']);
+		unset($unit_info['normal_card_id']);
+		unset($unit_info['rank_max_card_id']);
+		unset($unit_info['normal_icon_asset']);
+		unset($unit_info['rank_max_icon_asset']);
+		unset($unit_info['normal_unit_navi_asset_id']);
+		unset($unit_info['rank_max_unit_navi_asset_id']);
+		unset($unit_info['skill_asset_voice_id']);
+		unset($unit_info['release_tag']);
+		unset($unit_info['_encryption_release_id']);
+		
+		// Load unit level up pattern as array. It's guaranteed to be exist
+		$levelup_pattern = $unit_db->query(
+			'SELECT * FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_id = ?',
+			'i', $unit_info['unit_level_up_pattern_id']
+		)[0];
+		$new_levelup_pattern = [];	// Index is unit level, starts at 1
+		$temp_exp_needed = 0;
+		
+		foreach($levelup_pattern as $v)
+		{
+			$new_levelup_pattern[$v['unit_level']] = [
+				'next_exp' => $v['next_exp'],
+				'need_exp' => $v['next_exp'] - $temp_exp_needed,
+				'hp' => $unit_info['hp_max'] - $v['hp_diff'],
+				'hp_diff' => $v['hp_diff'],
+				'smile' => $unit_info['smile_max'] - $v['smile_diff'],
+				'smile_diff' => $v['smile_diff'],
+				'pure' => $unit_info['pure_max'] - $v['pure_diff'],
+				'pure_diff' => $v['pure_diff'],
+				'cool' => $unit_info['cool_max'] - $v['cool_diff'],
+				'cool_diff' => $v['cool_diff'],
+				'rank_up_cost' => $v['rank_up_cost'],
+				'exchange_point_rank_up_cost' => $v['exchange_point_rank_up_cost']
+			];
+			$temp_exp_needed += $v['next_exp'];
+		}
+		
+		$unit_info['unit_level_up_pattern'] = $new_levelup_pattern;
+		
+		return $this->unitlist[$unit_id] = $unit_info;
+	}
+};
+
+/// \brief Class that represent unit in memberlist
+class npps_user_unit
+{
+	/// Player user ID
+	protected $user_id;
+	/// Unit unique identifier for user
+	protected $unit_owning_user_id;
+	/// Array list of additional unit data
+	protected $unit_data;
+	/// Unit ID in unit database
+	public $unit_id;
+	
+	/// \brief Creates object which links unit in user memberlist
+	/// \param user_id Player user ID
+	/// \param unit_owning_user_id The unit unique identifier valid for user ID
+	/// \exception Exception Thrown if unit_owning_user_id is invalid.
+	public function __construct(int $user_id, int $unit_owning_user_id)
+	{
+		
+	}
+};
+
+/// \brief Get full unit information from the database
+/// \param unit_id The unit ID you want to return it's data
+/// \returns `NULL` if specificed unit ID is invalid or `array` from the unit database with these additions:
+///          - unit_level_up_pattern = array of levelup pattern, the key is unit level
+///              - need_exp = needed exp displayed in-game
+///              - hp = unit hp displayed in-game
+///              - smile = unit smile stats displayed in-game
+///              - pure = unit pure stats displayed in-game
+///              - cool = unit cool stats displayed in-game
+function unit_database_get_info(int $unit_id)
+{
+	return npps_unit_tempinfo::instance()->getinfo($unit_id);
+}
+
 /// \brief Add unit to current player memerlist **without checking if player memberlist is full**.
 /// \param user_id Player User ID
 /// \param card_id The unit ID to add.
-/// \returns unit_owning_user_id or 0 on failure.
+/// \returns `unit_owning_user_id` or 0 on failure.
 function unit_add_direct(int $user_id, int $card_id): int
 {
 	global $DATABASE;
@@ -93,7 +231,7 @@ function unit_remove(int $user_id, int $unit_own_id): bool
 /// \param user_id Player User ID
 /// \param card_id The unit ID to add.
 /// \param item_data see item_add_present_box() for more information
-/// \returns unit_owning_user_id or 0 on failure.
+/// \returns unit_owning_user_id or 0 on failure (because the memberlist is full for example)
 function unit_add(int $user_id, int $card_id, array $item_data = []): int
 {
 	global $DATABASE;
