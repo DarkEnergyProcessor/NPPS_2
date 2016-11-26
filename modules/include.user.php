@@ -6,6 +6,166 @@
 
 /// \file include.user.php
 
+/// Object which represents user
+final class npps_user
+{
+	/// Changeable fields in get/set. Empty array means unchangeable.
+	/// See npps_user_unit::$changeable for more information about these systems
+	static protected $changeable = [
+		'user_id' => [],
+		'login_key' => ['is_string', 's'],
+		'login_pwd' => ['is_string', 's'],
+		'passcode' => [],
+		'passcode_issue' => [],
+		'platform_code' => [],
+		'locked' => ['is_integer', 'i'],
+		'tos_agree' => ['is_integer', 'i'],
+		'create_date' => [],
+		'name' => ['is_string', 's'],
+		'bio' => ['is_string', 's'],
+		'invite_code' => [],
+		'last_active' => ['is_integer', 'i'],
+		'login_count' => ['is_integer', 'i'],
+		'background_id' => ['is_integer', 'i'],
+		'title_id' => ['is_integer', 'i'],
+		'current_exp' => [],
+		'next_exp' => [],
+		'level' => [],
+		'gold' => ['is_integer', 'i'],
+		'friend_points' => ['is_integer', 'i'],
+		'paid_loveca' => ['is_integer', 'i'],
+		'free_loveca' => ['is_integer', 'i'],
+		'max_lp' => ['is_integer', 'i'],
+		'max_friend' => ['is_integer', 'i'],
+		'overflow_lp' => ['is_integer', 'i'],
+		'full_lp_recharge' => ['is_integer', 'i'],
+		'max_unit' => ['is_integer', 'i'],
+		'max_unit_loveca' => ['is_integer', 'i'],
+		'main_deck' => ['is_integer', 'i'],
+		'normal_sticker' => ['is_integer', 'i'],
+		'silver_sticker' => ['is_integer', 'i'],
+		'gold_sticker' => ['is_integer', 'i'],
+		'purple_sticker' => ['is_integer', 'i'],
+		'tutorial_state' => ['is_integer', 'i'],
+		'present_table' => [],
+		'achievement_table' => [],
+		'item_table' => [],
+		'unit_table' => [],
+		'deck_table' => [],
+		'sticker_table' => [],
+		'login_bonus_table' => [],
+		'album_table' => []
+	];
+	/// Variable to track users object
+	static protected $users = [];
+	/// User data
+	protected $user_data;
+	/// Player user ID
+	protected $user_id;
+	
+	/// \brief Creates new npps_user instance
+	/// \param user_id The player user ID
+	/// \exception Exception thrown if user ID doesn't exist
+	protected function __construct(int $user_id)
+	{
+		$temp_data = npps_query("
+			SELECT * FROM `users`
+			WHERE user_id = $user_id");
+		
+		if(count($temp_data) == 0)
+			throw new Exception("User ID $user_id doesn't exist");
+		
+		$this->user_id = $user_id;
+		$this->user_data = $temp_data[0];
+	}
+	
+	/// \brief Gets npps_user object of the specificed user ID
+	/// \returns npps_user with specificed user ID
+	/// \exception Exception thrown if user ID doesn't exist
+	static public function get_instance(int $user_id): npps_user
+	{
+		if(!isset(npps_user::$users[$user_id]))
+			npps_user::$users[$user_id] = new npps_user($user_id);
+		
+		return npps_user::$users[$user_id];
+	}
+	
+	/// \brief Gets SIF-compilant user info
+	/// \returns SIF-compilant array suitable for user/userInfo
+	public function user_info()
+	{
+		global $UNIX_TIMESTAMP;
+
+		$lp_time_charge = $this->full_lp_recharge - $UNIX_TIMESTAMP;
+		$total_lp = intdiv($lp_time_charge, 360);
+
+		if($lp_time_charge < 0 || $this->overflow_lp > 0)
+		{
+			$lp_time_charge = 0;
+			$total_lp = $this->max_lp;
+		}
+
+		$total_lp += $this->overflow_lp;
+
+		return [
+			'user_id' => $this->user_id,
+			'name' => $this->name,
+			'level' => $this->level,
+			'exp' => $this->current_exp,
+			'previous_exp' => $this->current_exp - user_exp_requirement($this->level),
+			'next_exp' => $this->next_exp,		
+			'game_coin' => $this->gold,
+			'sns_coin' => $this->paid_loveca + $this->free_loveca,
+			'paid_sns_coin' => $this->paid_loveca,
+			'free_sns_coin' => $this->free_loveca,
+			'social_point' => $this->friend_points,
+			'unit_max' => $this->max_unit,
+			'energy_max' => $this->max_lp,
+			'energy_full_time' => to_datetime($this->full_lp_recharge),
+			'energy_full_need_time' => $lp_time_charge,
+			'over_max_energy' => $total_lp,
+			'friend_max' => $this->max_friend,
+			'invite_code' => $this->invite_code,
+			'tutorial_state' => $this->tutorial_state
+		];
+	}
+	
+	/// \brief Adds LP to specificed user
+	public function add_lp() {
+		global $UNIX_TIMESTAMP;
+	}
+	
+	/// PHP __get magic methods
+	public function __get(string $name)
+	{
+		if(isset(npps_user::$changeable[$name]))
+			return $this->user_data[$name];
+		
+		return NULL;
+	}
+	
+	/// PHP __set magic methods
+	public function __set(string $name, $val)
+	{
+		if(isset(npps_user::$changeable[$name]) &&
+		   !empty(npps_user::$changeable[$name]) &&
+		   npps_user::$changeable[$name][0]($val)
+		)
+		{
+			// Update value in this class and database
+			$this->user_data[$name] = $val;
+			npps_query("
+				UPDATE `users` SET $name = ?
+				WHERE user_id = {$this->user_id}
+			", npps_user::$changeable[$name][1], $val);
+			
+			return $val;
+		}
+		
+		throw new Exception("Property $name can't be set or doesn't exist");
+	}
+};
+
 /// \brief Creates new user. For /login/startUp module action
 /// \param key The user key
 /// \param pwd The user internal password
@@ -22,22 +182,29 @@ function user_create(string $key, string $pwd): int
 		$unix_ts,	// last_active
 		11,			// next_exp
 		$unix_ts,	// full_lp_recharge
-		'',			// friend_list
-		'',			// present_table
-		'',			// achievement_table
-		'',			// item_table
-		'',			// live_table
-		'',			// unit_table
-		'',			// deck_table
-		'',			// sticker_table
-		'',			// login_bonus_table
-		'',			// album_table
 	];
-	if(npps_query('INSERT INTO `users` (
-		login_key, login_pwd, create_date, last_active, next_exp, full_lp_recharge, friend_list,
-		present_table, achievement_table, item_table, live_table, unit_table, deck_table,
-		sticker_table, login_bonus_table, album_table)
-		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', 'ssiiiissssssssss', $user_data))
+	if(npps_query("
+		INSERT INTO `users` (
+			login_key,
+			login_pwd,
+			create_date,
+			last_active,
+			next_exp,
+			full_lp_recharge,
+			unlocked_title,
+			unlocked_background,
+			friend_list,
+			present_table,
+			achievement_table,
+			item_table,
+			unit_table,
+			deck_table,
+			sticker_table,
+			login_bonus_table,
+			album_table
+		) VALUES (?, ?, ?, ?, ?, ?, '', '', '', '', '', '', '', '', '', '', '')
+		",
+		'ssiiii', $user_data))
 	{
 		$user_id = npps_query('SELECT LAST_INSERT_ID() as user_id');
 		
@@ -50,7 +217,8 @@ function user_create(string $key, string $pwd): int
 /// \brief Configure user. It supports startWithoutInvite and startSetInvite
 /// \param user_id The player user ID previously created from user_create()
 /// \param invite_code Custom invite code to specify
-/// \returns `true` on success, `false` on failure (like `invite_code` already exist)
+/// \returns `true` on success, `false` on failure (like `invite_code` already
+///          exist)
 function user_configure(int $user_id, string $invite_code = NULL): bool
 {
 	if($invite_code == NULL)
@@ -59,14 +227,21 @@ function user_configure(int $user_id, string $invite_code = NULL): bool
 		{
 			$invite_code = sprintf('%09d', random_int(0, 999999999));
 		}
-		while(count(npps_query('SELECT user_id FROM `users` WHERE invite_code = ?', 's', $invite_code)) > 0);
+		while(count(npps_query(
+			'SELECT user_id FROM `users` WHERE invite_code = ?',
+			's',
+			$invite_code)) > 0
+		);
 	}
 	else
 		if(count(npps_query('SELECT user_id FROM `users` WHERE invite_code = ?', 's', $invite_code)) > 0)
 			return false;
 	
 	// Create users table
-	if(npps_file_query('data/initialize_user.sql', ['user_id' => $user_id, 'invite_code' => $invite_code]))
+	if(npps_file_query('data/initialize_user.sql',
+		['user_id' => $user_id, 'invite_code' => $invite_code]
+	   )
+	)
 		if(
 			/* Add Bokura no LIVE Kimi to no LIVE (easy, normal, hard) */
 			live_unlock($user_id, 1) &&	// easy
@@ -84,14 +259,17 @@ function user_id_from_credentials(string $uid, string $pwd, string $tkn): int
 	
 	if($arr && isset($arr[0]))
 	{
-		$user_id = npps_query('SELECT user_id, locked FROM `users` WHERE login_key = ? AND login_pwd = ?', 'ss', $uid, $pwd);
+		$user_id = npps_query('
+			SELECT user_id, locked FROM `users`
+			WHERE login_key = ? AND login_pwd = ?', 'ss', $uid, $pwd
+		);
 		
 		if($user_id && isset($user_id[0]))
 		{
 			$uid_target = $user_id[0]['user_id'];
 			
 			if($user_id[0]['locked'])
-				return $uid_target * (-1);
+				return -$uid_target;
 			
 			return $uid_target;
 		}
@@ -100,61 +278,18 @@ function user_id_from_credentials(string $uid, string $pwd, string $tkn): int
 	return 0;
 }
 
-/* Returns current user information */
-function user_current_info(int $user_id): array
+/// \brief Sets user last active time to current time
+/// \param uid The player user ID
+function user_set_last_active(int $uid)
 {
 	global $UNIX_TIMESTAMP;
 	
-	$user_info = npps_query(<<<QUERY
-	SELECT name, level, current_exp, next_exp, gold, paid_loveca, free_loveca,
-		friend_point, max_unit, max_lp, full_lp_recharge, overflow_lp, max_friend,
-		invite_code, tutorial_state
-	FROM `users` WHERE user_id = $user_id
-QUERY
-	)[0];
-
-	$lp_time_charge = $user_info['full_lp_recharge'] - $UNIX_TIMESTAMP;
-	$total_lp = intdiv($lp_time_charge, 360);
-
-	if($lp_time_charge < 0 || $user_info['overflow_lp'] > 0)
-	{
-		$lp_time_charge = 0;
-		$total_lp = $user_info['max_lp'];
-	}
-
-	$total_lp += $user_info['overflow_lp'];
-
-	return [
-		"user_id" => $user_id,
-		"name" => $user_info['name'],
-		"level" => $user_info['level'],
-		"exp" => $user_info['exp'],
-		"previous_exp" => $user_info['exp'] - user_exp_requirement($user_info['level']),
-		"next_exp" => $user_info['next_exp'],		
-		"game_coin" => $user_info['gold'],
-		"sns_coin" => $user_info['paid_loveca'] + $user_info['free_loveca'],
-		"paid_sns_coin" => $user_info['paid_loveca'],
-		"free_sns_coin" => $user_info['free_loveca'],
-		"social_point" => $user_info['friend_point'],
-		"unit_max" => $user_info['max_unit'],
-		"energy_max" => $user_info['max_lp'],
-		"energy_full_time" => to_datetime($user_info['full_lp_recharge']),
-		"energy_full_need_time" => $lp_time_charge,
-		"over_max_energy" => $total_lp,
-		"friend_max" => $user_info['max_friend'],
-		"invite_code" => $user_info['invite_code'],
-		"tutorial_state" => $user_info['tutorial_state']
-	];
+	npps_unit::get_instance($uid)->last_active = $UNIX_TIMESTAMP;
 }
 
-function user_set_last_active(int $uid, string $tkn)
-{
-	global $UNIX_TIMESTAMP;
-	
-	npps_query("UPDATE `users` SET last_active = $UNIX_TIMESTAMP WHERE user_id = $uid");
-	npps_query("UPDATE `logged_in` SET time = $UNIX_TIMESTAMP WHERE token = ?", 's', $tkn);
-}
-
+/// \brief Gets required EXP for the specificed rank
+/// \param rank The rank to get it's required EXP
+/// \returns Required EXP for next rank
 function user_exp_requirement(int $rank): int
 {
 	if($rank <= 0) return 0;
@@ -162,6 +297,9 @@ function user_exp_requirement(int $rank): int
 	return intval(floor((21 + $rank ** 2.12) / 2 + 0.5));
 }
 
+/// \brief Gets required EXP for the specificed rank from rank 1
+/// \param rank The rank to get it's required EXP
+/// \returns Required EXP for next rank, starting from rank 1
 function user_exp_requirement_recursive(int $rank): int
 {
 	if($rank <= 0) return 0;
@@ -172,88 +310,6 @@ function user_exp_requirement_recursive(int $rank): int
 		$sum += user_exp_requirement($i);
 	
 	return $sum;
-}
-
-/* Retrieve icon user info */
-/*
-	name - user name
-	level - user level
-	badge - user badge
-	unit_info
-		unit_id - center unit id
-		level - center unit level
-		skill - leader skill
-		smile - center smile
-		pure - center pure
-		cool - center cool
-		hp - max HP
-		idolized - is idolized?
-		bond_max - is max bonded?
-		level_max - is max leveled?
-
-*/
-function user_get_basic_info(int $user_id): array
-{
-	$unit_db = npps_get_database('unit');
-	
-	$info = npps_query("SELECT name, level, main_deck, badge_id, deck_table, unit_table FROM `users` WHERE user_id = $user_id")[0];
-	$leader_own_uid = explode(':', npps_query("SELECT deck_members FROM `{$info[4]}` WHERE deck_num = {$info[2]}")[0][0])[4];
-	$leader_unit = npps_query("SELECT card_id, level, max_level, CASE WHEN level = max_level THEN 1 ELSE 0 END, CASE WHEN bond = max_bond THEN 1 ELSE 0 END, bond, skill_level FROM `{$info[5]}` WHERE unit_id = $leader_own_uid")[0];
-	$unit_info = $unit_db->execute_query("SELECT before_level_max, default_leader_skill_id, unit_level_up_pattern_id, smile_max, pure_max, cool_max, hp_max FROM `unit_m` WHERE unit_id = {$leader_unit[0]}")[0];
-	$stats_diff = $unit_db->execute_query("SELECT smile_diff, pure_diff, cool_diff, hp_diff FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_id = {$unit_info[2]} AND unit_level = {$leader_unit[1]}")[0];
-	
-	return [
-		'name' => $info[0],
-		'level' => $info[1],
-		'badge' => $info[3],
-		'unit_info' => [
-			'unit_id' => $leader_unit[0],
-			'level' => $leader_unit[1],
-			'skill' => $unit_info[1] ?? 0,
-			'skill_level' => $leader_unit[6],
-			'smile' => $unit_info[3] - $stats_diff[0],
-			'pure' => $unit_info[4] - $stats_diff[1],
-			'cool' => $unit_info[5] - $stats_diff[2],
-			'hp' => $unit_info[6] - $stats_diff[3],
-			'bond' => $leader_unit[5],
-			'idolized' => $leader_unit[2] > $unit_info[0],
-			'bond_max' => !!$leader_unit[4],
-			'level_max' => !!$leader_unit[3]
-		]
-	];
-}
-
-function user_add_lp(int $user_id, int $amount)
-{
-	global $UNIX_TIMESTAMP;
-	
-	$lp_info = npps_query("SELECT full_lp_recharge, overflow_lp FROM `users` WHERE user_id = $user_id")[0];
-	$lp_amount_current = (int)ceil(($lp_info[0] - $UNIX_TIMESTAMP) / 360);
-	
-	/* If LP is already full, add to overflow LP count instead */
-	if($lp_amount_current <= 0)
-	{
-		$lp_amount_current = 0;
-		npps_query("UPDATE `users` SET overflow_lp = overflow_lp + $amount WHERE user_id = $user_id");
-		
-		return;
-	}
-	
-	/* Well, check if amount is enough to full charge the LP */
-	$amount_time = $amount * 360;
-	$time_remaining = $lp_info[0] - $amount_time;
-	
-	if($time_remaining < $UNIX_TIMESTAMP)
-	{
-		/* Some overflow occur */
-		$overflow_amount = (int)ceil(($UNIX_TIMESTAMP - $time_remaining) / 360);
-		npps_query("UPDATE `users` SET full_lp_recharge = $UNIX_TIMESTAMP, overflow_lp = $overflow_amount WHERE user_id = $user_id");
-		
-		return;
-	}
-	
-	/* Simply decrease the time */
-	npps_query("UPDATE `users` SET full_lp_recharge = $time_remaining WHERE user_id = $user_id");
 }
 
 function user_sub_lp(int $user_id, int $amount)

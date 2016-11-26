@@ -75,7 +75,16 @@ INSERT INTO `deck_$user_id` VALUES (8, 'Team H', '0:0:0:0:0:0:0:0:0');
 INSERT INTO `deck_$user_id` VALUES (9, 'Team I', '0:0:0:0:0:0:0:0:0');
 
 -- Update users
-UPDATE `users` SET invite_code = $invite_code, present_table = present_$user_id, achievement_table = achievement_$user_id,
-item_table = item_$user_id, unit_table = unit_$user_id, deck_table = deck_$user_id,
-sticker_table = sticker_$user_id, login_bonus_table = login_bonus_$user_id, album_table = album_$user_id, unlocked_title = '1',
-unlocked_background = '1' WHERE user_id = $user_id;
+UPDATE `users` SET
+	invite_code = '$invite_code',
+	present_table = 'present_$user_id',
+	achievement_table = 'achievement_$user_id',
+	item_table = 'item_$user_id',
+	unit_table = 'unit_$user_id',
+	deck_table = 'deck_$user_id',
+	sticker_table = 'sticker_$user_id',
+	login_bonus_table = 'login_bonus_$user_id',
+	album_table = 'album_$user_id',
+	unlocked_title = '1',
+	unlocked_background = '1'
+WHERE user_id = $user_id;

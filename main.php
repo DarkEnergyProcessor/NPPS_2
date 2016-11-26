@@ -1,7 +1,7 @@
 <?php
 /*
  * Null-Pointer Private Server
- * Copyright © 2037 Dark Energy Processor Corporation
+ * Copyright Â© 2037 Dark Energy Processor Corporation
  */
 
 /// \file main.php
@@ -9,7 +9,8 @@
 require_once('error_codes.php');
 define('MAIN_INVOKED', '0.0.1 alpha', true);
 
-// Fixes nginx. Source: http://www.php.net/manual/en/function.getallheaders.php#84262
+// Fixes nginx.
+// Source: http://www.php.net/manual/en/function.getallheaders.php#84262
 if(!function_exists('getallheaders'))
 {
 	function getallheaders(): array
@@ -19,7 +20,11 @@ if(!function_exists('getallheaders'))
 		{
 			if (substr($name, 0, 5) == 'HTTP_')
 			{
-				$headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+				$headers[str_replace(' ', '-', ucwords(
+					strtolower(
+						str_replace('_', ' ', substr($name, 5))
+					)
+				))] = $value;
 			}
 	   }
 	   return $headers;
@@ -66,6 +71,9 @@ $HANDLER_SHUTDOWN = function()
 	global $REQUEST_SUCCESS;
 	global $RESPONSE_ARRAY;
 	
+	// We still need to be in this directory
+	assert(chdir(dirname(__FILE__)));
+	
 	if($MAINTENANCE_MODE) exit;	// Don't do anything on maintenance
 	
 	header('Content-Type: application/json; charset=utf-8');
@@ -75,7 +83,9 @@ $HANDLER_SHUTDOWN = function()
 	error_log($contents, 4);
 	
 	if(!npps_config('DEBUG_ENVIRONMENT'))
+	{
 		$contents = "";
+	}
 	
 	// Check if the request fails
 	if($REQUEST_SUCCESS == false)
@@ -85,7 +95,8 @@ $HANDLER_SHUTDOWN = function()
 		];
 		
 		if(http_response_code() == 200)
-			npps_http_code(error_get_last() == NULL ? 403 : 500);	// If it's not previously set
+			// If it's not previously set, then set it
+			npps_http_code(error_get_last() == NULL ? 403 : 500);
 		
 		ob_end_clean();
 		$asd = json_encode($output);
@@ -113,8 +124,12 @@ $HANDLER_SHUTDOWN = function()
 	$output = json_encode($RESPONSE_ARRAY);
 	if(strlen($output) > 2)
 	{
-		header(sprintf('X-Message-Code: %s', hash_hmac('sha1', $output, X_MESSAGE_CODE_KEY)));
-		header(sprintf('X-Message-Sign: %s', base64_encode(str_repeat("\x00", 128))));
+		header(sprintf('X-Message-Code: %s',
+			hash_hmac('sha1', $output, X_MESSAGE_CODE_KEY))
+		);
+		header(sprintf('X-Message-Sign: %s',
+			base64_encode(str_repeat("\x00", 128)))
+		);
 		
 		echo $output;
 	}
@@ -124,7 +139,8 @@ $HANDLER_SHUTDOWN = function()
 	exit;
 };
 
-/// \brief NPPS main script handler. Not merged to main() to prevent variables pollution
+/// \brief NPPS main script handler. Not merged to main() to prevent variables
+///        pollution
 /// \param BUNDLE Bundle-Version value from header
 /// \param USER_ID Player user ID
 /// \param TOKEN Player token
@@ -133,13 +149,18 @@ $HANDLER_SHUTDOWN = function()
 /// \param OS_VERSION OS-Version value from header
 /// \param TIMEZONE TimeZone value from header
 /// \param module module/handler to be accessed
-/// \param action action in module/handler to be accessed. NULL if module is `api`
+/// \param action action in module/handler to be accessed. NULL if module is
+///        `api`
 /// \returns `true` if request success, `false` otherwise.
-$MAIN_SCRIPT_HANDLER = function(string $BUNDLE, int& $USER_ID, $TOKEN, string $OS, int $PLATFORM_ID, string $OS_VERSION, string $TIMEZONE, string $module, $action = NULL): bool
+$MAIN_SCRIPT_HANDLER = function(
+	int& $USER_ID,
+	$TOKEN,
+	int $PLATFORM_ID,
+	string $module,
+	$action = NULL): bool
 {
 	global $REQUEST_HEADERS;
 	global $RESPONSE_ARRAY;
-	global $DATABASE;
 	global $UNIX_TIMESTAMP;
 	global $TEXT_TIMESTAMP;
 	
@@ -156,15 +177,20 @@ $MAIN_SCRIPT_HANDLER = function(string $BUNDLE, int& $USER_ID, $TOKEN, string $O
 				return false;
 			}
 			
-			if(strcmp($REQUEST_HEADERS['x-message-code'], hash_hmac('sha1', $_POST['request_data'], X_MESSAGE_CODE_KEY)))
+			if(strcmp($REQUEST_HEADERS['x-message-code'],
+				hash_hmac('sha1', $_POST['request_data'], X_MESSAGE_CODE_KEY)
+			))
 			{
-				echo "Invalid X-Message-Code";
+				echo 'Invalid X-Message-Code';
 				http_response_code(400);
 				return false;
 			}
 		}
 		
-		$request_data = json_decode(mb_convert_encoding($_POST['request_data'], 'UTF-8', 'UTF-8'), true);
+		$request_data = json_decode(
+			mb_convert_encoding($_POST['request_data'], 'UTF-8', 'UTF-8'),
+			true
+		);
 		
 		if($request_data == NULL)
 		{
@@ -179,7 +205,7 @@ $MAIN_SCRIPT_HANDLER = function(string $BUNDLE, int& $USER_ID, $TOKEN, string $O
 	}
 	
 	// Handler first. A handler doesn't need to have valid token
-	if(is_string($action) && strcmp($request_data['module'] ?? '', $module) && strcmp($request_data['action'] ?? '', $action))
+	if(is_string($action))
 	{
 		$modname = "handlers/$module/$action.php";
 		
@@ -246,7 +272,7 @@ $MAIN_SCRIPT_HANDLER = function(string $BUNDLE, int& $USER_ID, $TOKEN, string $O
 		$RESPONSE_ARRAY["response_data"] = [];
 		$RESPONSE_ARRAY["status_code"] = 200;
 		
-		/* Call all handler in order */
+		/* Call all modules in order */
 		foreach($request_data as $rd)
 		{
 			$modname = "modules/{$rd["module"]}/{$rd["action"]}.php";
@@ -288,8 +314,7 @@ $MAIN_SCRIPT_HANDLER = function(string $BUNDLE, int& $USER_ID, $TOKEN, string $O
 		
 		return true;
 	}
-	else if($action !== NULL && isset($request_data['module']) && isset($request_data['action']) &&
-			strcmp($request_data['module'], $module) == 0 && strcmp($request_data['action'], $action) == 0)
+	else if($action !== NULL)
 	{
 		/* Single module call in form /main.php/module/action */
 		$modname = "modules/$module/$action.php";
@@ -332,8 +357,8 @@ $MAIN_SCRIPT_HANDLER = function(string $BUNDLE, int& $USER_ID, $TOKEN, string $O
 };
 
 /// \brief Function to process Authorize header
-/// \returns Returns string if array is supplied. Returns array if string is supplied.
-///          **Returns false if the authorize parameter is invalid**
+/// \returns Returns string if array is supplied. Returns array if string is
+///          supplied. **Returns false if the authorize parameter is invalid**
 function authorize_function($authorize)
 {
 	if(is_array($authorize))
@@ -348,8 +373,14 @@ function authorize_function($authorize)
 		
 		// Check the authorize string
 		if(
-			(isset($new_assemble["consumerKey"]) && strcmp($new_assemble["consumerKey"], CONSUMER_KEY) == 0) &&
-			(isset($new_assemble["version"]) && strcmp($new_assemble["version"], "1.1") == 0) &&
+			(
+				isset($new_assemble["consumerKey"]) &&
+				strcmp($new_assemble["consumerKey"], CONSUMER_KEY) == 0
+			) &&
+			(
+				isset($new_assemble["version"]) &&
+				strcmp($new_assemble["version"], "1.1") == 0
+			) &&
 			isset($new_assemble["nonce"]) &&
 			isset($new_assemble["timeStamp"])
 		)
@@ -383,20 +414,22 @@ function npps_main()
 	$MODULE_TARGET = NULL;
 	$ACTION_TARGET = NULL;
 	
-	/* Set timezone */
+	// Set timezone
 	if(npps_config('DEFAULT_TIMEZONE'))
 		date_default_timezone_set(DEFAULT_TIMEZONE);
 	
-	/* Check if it's maintenance */
-	if($MAINTENANCE_MODE = (file_exists("Maintenance") || file_exists("Maintenance.txt") ||
-							file_exists("maintenance") || file_exists("maintenance.txt"))
-	)
+	// Check if it's maintenance
+	if(($MAINTENANCE_MODE = (file_exists("Maintenance") ||
+							file_exists("Maintenance.txt") ||
+							file_exists("maintenance") ||
+							file_exists("maintenance.txt"))
+	))
 	{
 		header('Maintenance: 1');
 		exit;
 	}
 	
-	/* Check the authorize */
+	// Check the authorize
 	if(isset($REQUEST_HEADERS['authorize']))
 		$AUTHORIZE_DATA = authorize_function($REQUEST_HEADERS['authorize']);
 	if($AUTHORIZE_DATA === false)
@@ -406,21 +439,13 @@ function npps_main()
 	}
 	$TOKEN = $AUTHORIZE_DATA["token"] ?? NULL;
 	
-	/* Check the bundle version */
-	if(!isset($REQUEST_HEADERS["bundle-version"]))
-	{
-		echo 'Bundle-Version header needed!';
-		exit;
-	}
-	
-	/* Check if client-version is OK */
-	if(isset($REQUEST_HEADERS["client-version"]))
+	// Check if client-version is OK
+	if(isset($REQUEST_HEADERS['client-version']))
 	{
 		if(npps_config('SERVER_VERSION'))
 		{
-			//header("Server-Version: ".SERVER_VERSION);
 			$ver1 = explode('.', SERVER_VERSION);
-			$ver2 = explode('.', $REQUEST_HEADERS["client-version"]);
+			$ver2 = explode('.', $REQUEST_HEADERS['client-version']);
 			$trigger_version_up = NULL;
 			
 			for($i = 0; $i < 3; $i++)
@@ -432,27 +457,43 @@ function npps_main()
 				}
 			}
 			
-			$trigger_version_up = $trigger_version_up ?? $REQUEST_HEADERS["client-version"] ?? SERVER_VERSION;
+			$trigger_version_up = $trigger_version_up ??
+								  $REQUEST_HEADERS['client-version'] ??
+								  SERVER_VERSION;
 			header("Server-Version: $trigger_version_up");
 		}
 		else
-			header("Server-Version: {$REQUEST_HEADERS["client-version"]}");
+			header("Server-Version: {$REQUEST_HEADERS['client-version']}");
 	}
 	else
 	{
-		echo "Client-Version header needed!";
+		echo 'Client-Version header needed!';
 		exit;
 	}
 	
-	/* get the module and the action. Use different scope */
+	// Check Platform-Type header
+	if(!isset($REQUEST_HEADERS['platform-type']))
 	{
-		preg_match('!main.php/(\w+)/?(\w*)!', $_SERVER["REQUEST_URI"], $x);
+		echo 'Platform-Type header needed!';
+		exit;
+	}
+	else if(!is_numeric($REQUEST_HEADERS['platform-type']))
+	{
+		echo 'Invalid Platform-Type!';
+		exit;
+	}
+	
+	// get the module and the action. Use different scope to prevent variables
+	// pollution
+	{
+		$x = [];
+		preg_match('!main.php/(\w+)/?(\w*)!', $_SERVER['REQUEST_URI'], $x);
 		
 		if(isset($x[1]))
 			$MODULE_TARGET = $x[1];
 		else
 		{
-			echo "Module needed!";
+			echo 'Module needed!';
 			exit;
 		}
 		
@@ -473,45 +514,41 @@ function npps_main()
 	}
 	
 	
-	/* Load database wrapper and initialize it */
+	// Load database wrapper and initialize it
 	$DATABASE = require('database_wrapper.php');
 	$DATABASE->initialize_environment();
 	
-	/* Call handler. Parameters: bundle-version, user_id, token, os, platform-id, os-version, time-zone = "unknown", module = "api", action = NULL */
+	// Call main script handler
 	$REQUEST_SUCCESS = $MAIN_SCRIPT_HANDLER(
-		$REQUEST_HEADERS["bundle-version"],
 		$USER_ID,
 		$TOKEN,
-		$REQUEST_HEADERS["os"] ?? "unknown",
-		$REQUEST_HEADERS["platform-type"] ?? -1,
-		$REQUEST_HEADERS["os-version"] ?? "unknown",
-		$REQUEST_HEADERS["time-zone"] ?? "unknown",
-		$MODULE_TARGET ?? "api",
+		$REQUEST_HEADERS['platform-type'],
+		$MODULE_TARGET ?? 'api',
 		$ACTION_TARGET
 	);
 	
-	/* Check if user id changed */
+	// Check if user id changed
 	if($USER_ID > 0)
 		header("user_id: $USER_ID");
 	
-	/* Reassemble authorize function */
+	// Reassemble authorize header
 	{
 		$new_authorize = [];
 		
 		foreach($AUTHORIZE_DATA as $k => $v)
 			$new_authorize[$k] = $v;
 		
-		$new_authorize["requestTimeStamp"] = $new_authorize["timeStamp"];
-		$new_authorize["timeStamp"] = time();
-		$new_authorize["user_id"] = $USER_ID > 0 ? $USER_ID : "";
+		$new_authorize['requestTimeStamp'] = $new_authorize['timeStamp'];
+		$new_authorize['timeStamp'] = time();
+		$new_authorize['user_id'] = $USER_ID > 0 ? $USER_ID : "";
 		
 		if(is_string($TOKEN))
-			$new_authorize["token"] = $TOKEN;
+			$new_authorize['token'] = $TOKEN;
 		
-		header(sprintf("authorize: %s", authorize_function($new_authorize)));
+		header(sprintf('authorize: %s', authorize_function($new_authorize)));
 	}
 	
-	/* Exit. Let the shutdown function do the rest */
+	// Exit. Let the shutdown function do the rest
 	exit;
 }
 

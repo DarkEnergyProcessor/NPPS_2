@@ -139,7 +139,7 @@ class MySQLDatabaseWrapper extends DatabaseWrapper
 					if($result)
 					{
 						/* Has result */
-						$out = $result->fetch_all(MYSQLI_BOTH);
+						$out = $result->fetch_all(MYSQLI_ASSOC);
 						$result->free();
 						
 						return $out;
@@ -278,9 +278,16 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 			$this->db_id = random_int(0, 2147483647);
 		}
 		
-		$this->db_handle = new SQLite3($dbname, $custom_filename ? SQLITE3_OPEN_READONLY : (SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE));
-		$this->db_handle->busyTimeout(5000);				// timeout: 5 seconds
-		$this->db_handle->createFunction('CONCAT', $GLOBALS['common_sqlite3_concat_function']);
+		$this->db_handle = new SQLite3(
+			$dbname,
+			$custom_filename ? SQLITE3_OPEN_READONLY :
+			                  (SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE)
+		);
+		$this->db_handle->busyTimeout(5000);			// timeout: 5 seconds
+		$this->db_handle->createFunction(
+			'CONCAT',
+			$GLOBALS['common_sqlite3_concat_function']
+		);
 	}
 	
 	public function initialize_environment()
@@ -315,7 +322,11 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 	public function query(string $query, string $types = NULL, ...$values)
 	{
 		/* Try to convert the MySQL-specific keyword to SQLite */
-		$query = str_ireplace("AUTO_INCREMENT", "AUTOINCREMENT", str_ireplace("LAST_INSERT_ID", "last_insert_rowid", $query));
+		$query = str_ireplace(
+			"AUTO_INCREMENT",
+			"AUTOINCREMENT",
+			str_ireplace("LAST_INSERT_ID", "last_insert_rowid", $query)
+		);
 		
 		if(isset($values[0]) && is_array($values[0]))
 			$values = $values[0];
@@ -352,7 +363,6 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 						}
 						default:
 						{
-							unset($datatype);
 							break;
 						}
 					}
@@ -391,7 +401,7 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 			
 			$out = [];
 			
-			while($row = $result->fetchArray(SQLITE3_BOTH))
+			while($row = $result->fetchArray(SQLITE3_ASSOC))
 				$out[] = $row;
 			
 			return $out;
