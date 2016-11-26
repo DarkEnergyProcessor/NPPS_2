@@ -6,7 +6,8 @@
 
 /// \file include.token.php
 
-/* Creates token */
+/// \brief Generate new token
+/// \returns New token
 function token_generate(): string
 {
 	static $valid_strs = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -21,7 +22,9 @@ function token_generate(): string
 	return implode('', $token_ret);
 }
 
-/* Check if token is there */
+/// \brief Check if token is (still) valid
+/// \param token Token string to check
+/// \returns `true` if token is valid, `false` otherwise
 function token_exist($token): bool
 {
 	token_invalidate();
@@ -35,30 +38,45 @@ function token_exist($token): bool
 	return false;
 }
 
-/* Kick players not logged in for more than 3 days */
+/// Kick players which is not logged in for time specificed in
+/// `AUTO_LOGOFF_SECONDS` configuration in npps.ini
 function token_invalidate()
 {
 	global $UNIX_TIMESTAMP;
-	$token_expire = npps_config('AUTO_LOGOFF_SECONDS');
+	$token_expire = npps_config('login/AUTO_LOGOFF_SECONDS', true);
 	
 	foreach(npps_query('SELECT * FROM `logged_in`') as $value)
 	{
 		if(($UNIX_TIMESTAMP - $value['last_activity_time']) > $token_expire)
-			npps_query('DELETE FROM `logged_in` WHERE last_activity_time = ?', 'i', $value[3]);
+			npps_query('
+				DELETE FROM `logged_in`
+				WHERE last_activity_time = ?', 'i',
+				$value['last_activity_time']
+			);
 	}
 }
 
-/* Forcefully destroy the token */
+/// \brief Invalidate token
+/// \param token Token string to invalidate
 function token_destroy(string $token)
 {
 	npps_query('DELETE FROM `logged_in` WHERE token = ?', 's', $token);
 }
 
+/// \brief Retrieve pseudo `unit_owning_user_id` from token.
+/// \param token The token string
+/// \returns pseudo `unit_owning_user_id` 
 function token_pseudo_unit_own_id(string $token): int
 {
-	$pseudo_curnum = npps_query('SELECT pseudo_unit_own_id FROM `logged_in` WHERE token = ?', 's', $token)[0]['pseudo_unit_own_id'];
+	$pseudo_curnum = npps_query('
+		SELECT pseudo_unit_own_id FROM `logged_in`
+		WHERE token = ?', 's', $token
+	)[0]['pseudo_unit_own_id'];
 	
-	npps_query('UPDATE `logged_in` SET pseudo_unit_own_id = pseudo_unit_own_id - 1 WHERE token = ?', 's', $token);
+	npps_query('
+		UPDATE `logged_in` SET pseudo_unit_own_id = pseudo_unit_own_id - 1
+		WHERE token = ?', 's', $token
+	);
 	
 	return $pseudo_curnum;
 }

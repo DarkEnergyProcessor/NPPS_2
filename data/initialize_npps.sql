@@ -82,7 +82,7 @@ CREATE TABLE `users` (
 	max_friend INTEGER NOT NULL DEFAULT 10,					-- Max friend
 	overflow_lp INTEGER NOT NULL DEFAULT 0,					-- Amount of additional LP
 	full_lp_recharge INTEGER NOT NULL DEFAULT 0,			-- Unix time before the LP fully recharged.
-	max_unit INTEGER NOT NULL DEFAULT 90,					-- Maximum memberlist. Including the ones that increased with loveca.
+	max_unit INTEGER NOT NULL DEFAULT 120,					-- Maximum memberlist. Including the ones that increased with loveca.
 	max_unit_loveca INTEGER NOT NULL DEFAULT 0,				-- Amount of "Increase Member Limit".
 	main_deck INTEGER NOT NULL DEFAULT 1,					-- Which deck is set to "Main"?
 	normal_sticker INTEGER NOT NULL DEFAULT 0,				-- R stickers

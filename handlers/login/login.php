@@ -1,5 +1,5 @@
 <?php
-/* Check if there's login_key and login_passwd */
+// Check if there's login_key and login_passwd
 if(!isset($REQUEST_DATA["login_key"]) || !isset($REQUEST_DATA["login_passwd"]))
 {
 	echo 'Missing "login_key" or "login_passwd"';
@@ -12,40 +12,48 @@ if(token_exist($TOKEN) == false)
 	return false;
 }
 
-/* Ok, let's find links */
+// Ok, let's find links
 $connected_user_id = user_id_from_credentials($REQUEST_DATA['login_key'], $REQUEST_DATA['login_passwd'], $TOKEN);
 
 if($connected_user_id == 0)
 	// No user ID found or login incorrect
-	return 407;	// somehow hardcoded.
+	return 407;
 else if($connected_user_id < 0)
 {
-	// Account is banned!
+	// Account is locked
 	npps_http_code(423, 'Locked');
 	return false;
 }
 
+// Start transaction
 npps_begin_transaction();
 
-/* Create new token again */
+// Create new token again
 $newtoken = token_generate();
 $USER_ID = $connected_user_id;
 
-/* Delete previous token */
-npps_query('DELETE FROM `logged_in` WHERE login_key = ? AND login_pwd = ?', 'ss', $REQUEST_DATA['login_key'], $REQUEST_DATA['login_passwd']);
+// Delete previous token
+npps_query(
+	'DELETE FROM `logged_in` WHERE login_key = ? AND login_pwd = ?', 'ss',
+	$REQUEST_DATA['login_key'], $REQUEST_DATA['login_passwd']
+);
 
-/* Delete all WIP lives */
+// Delete all WIP lives
 npps_query("DELETE FROM `wip_live` WHERE user_id = $connected_user_id");
 
-/* Delete all WIP scenario */
+// Delete all WIP scenario
 npps_query("DELETE FROM `wip_scenario` WHERE user_id = $connected_user_id");
 
-/* Update */
-npps_query('UPDATE `logged_in` SET login_key = ?, login_pwd = ?, token = ? WHERE token = ?', 'ssss', 
-	$REQUEST_DATA['login_key'], $REQUEST_DATA['login_passwd'], $newtoken, $TOKEN);
+// Update
+npps_query('
+	UPDATE `logged_in` SET login_key = ?, login_pwd = ?, token = ?
+	WHERE token = ?', 'ssss',
+	$REQUEST_DATA['login_key'], $REQUEST_DATA['login_passwd'], $newtoken, $TOKEN
+);
 
 $TOKEN = $newtoken;
 
+// Commit transaction
 npps_end_transaction();
 
 return [

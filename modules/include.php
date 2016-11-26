@@ -12,6 +12,8 @@
 /// \returns Position of string occured, or false if not found
 function strpos_array(string $haystack, array $needles)
 {
+	$pos = NULL;
+	
 	if(count($needles) == 0)
 		return false;
 	
@@ -26,7 +28,8 @@ function strpos_array(string $haystack, array $needles)
 	}
 }
 
-/// \brief Converts UNIX timestamp to SIF-compilant datetime relative to **local server** time.
+/// \brief Converts UNIX timestamp to SIF-compilant datetime relative to
+///        **local server** time.
 /// \param timestamp UNIX timestamp to convert
 /// \returns SIF-compilant datetime strong
 /// \note The result datetime always starts at January 2nd 1970.
@@ -37,7 +40,8 @@ function to_datetime(int $timestamp): string
 	return date('Y-m-d H:i:s', $timestamp);
 }
 
-/// \brief Converts UNIX timestamp to SIF-compilant datetime relative to UTC time.
+/// \brief Converts UNIX timestamp to SIF-compilant datetime relative to UTC
+///        time.
 /// \param timestamp UNIX timestamp to convert
 /// \returns SIF-compilant datetime strong
 /// \note The result datetime always starts at January 2nd 1970.
@@ -48,7 +52,8 @@ function to_utcdatetime(int $timestamp): string
 	return gmdate('Y-m-d H:i:s', $timestamp);
 }
 
-/// \brief Converts timestamp to string which gives human readable representation of time difference (like 2d ago, ...).
+/// \brief Converts timestamp to string which gives human readable
+///        representation of time difference (like 2d ago, ...).
 /// \param timestamp UNIX timestamp to convert
 /// \param full Do not use single letter for time identification (like d = day)?
 /// \returns Human readable string
@@ -107,7 +112,8 @@ function npps_get_database(string $db_name = ''): DatabaseWrapper
 /// \param another_db Database name to attach
 /// \param db_list Lists of another database name to attach
 /// \note This function does nothing if main database is specificed.
-function npps_attach_database(DatabaseWrapper $db, string $another_db, string ...$db_list)
+function npps_attach_database(DatabaseWrapper $db, string $another_db,
+							  string ...$db_list)
 {
 	static $attached_db = [];
 	
@@ -122,7 +128,9 @@ function npps_attach_database(DatabaseWrapper $db, string $another_db, string ..
 	if(isset($attached_db[$string_representation][$another_db]) == false)
 	{
 		$re = str_replace('/', '_', $another_db);
-		$attached_db[$string_representation][$another_db] = $db->query("ATTACH DATABASE `data/$another_db.db_` as $re");
+		$attached_db[$string_representation][$another_db] = $db->query(
+			"ATTACH DATABASE `data/$another_db.db_` as $re"
+		);
 	}
 	
 	foreach($db_list as $name)
@@ -130,14 +138,17 @@ function npps_attach_database(DatabaseWrapper $db, string $another_db, string ..
 		if(isset($attached_db[$string_representation][$name]) == false)
 		{
 			$re = str_replace('/', '_', $name);
-			$attached_db[$string_representation][$name] = $db->query("ATTACH DATABASE `data/$name.db_` as $re");
+			$attached_db[$string_representation][$name] = $db->query(
+				"ATTACH DATABASE `data/$name.db_` as $re"
+			);
 		}
 	}
 }
 
 /// \brief Executes query in main database. Equivalent to $DATABASE->query()
 /// \param query SQL query
-/// \param list datatype list if prepared statement is used. Follows MySQL datatype character
+/// \param list datatype list if prepared statement is used. Follows MySQL
+///        datatype character
 /// \param arglist argument list passed to prepared statement (if used)
 /// \returns The result of the query
 function npps_query(string $query, string $list = NULL, ...$arglist)
@@ -150,27 +161,25 @@ function npps_query(string $query, string $list = NULL, ...$arglist)
 		return $DATABASE->query($query);
 }
 
-/// \brief Similar to npps_query, but specify SQL file and variables to be substituted inside.
-///        Prepared statement is not supported as it might contain multiple statements.
+/// \brief Similar to npps_query, but specify SQL file and variables to be
+///        substituted inside. Prepared statement is not supported as it might
+///        contain multiple statements.
 /// \param filename filename which contains the SQL string
 /// \param variable_list PHP variables to be substituted inside the SQL string
 /// \returns The result of the query
 function npps_file_query(string $filename, array $variable_list = [])
 {
 	$__x = file_get_contents($filename);
-	$__res = NULL;
-	
+
 	{
 		extract($variable_list);
-		$__res = eval("
+		return npps_query(eval("
 return <<<DATA
 $__x
 DATA
 ;
-		");
+		"));
 	}
-	
-	return npps_query($__res);
 }
 
 /// \brief Like explode, but converts value to number if necessary
@@ -210,7 +219,9 @@ function npps_gethost(): string
 	if($_SERVER['SERVER_PORT'] == ($_SERVER['HTTPS'] ? 443 : 80))
 		return $cached_result = $_SERVER['REMOTE_ADDR'];
 	else
-		return $cached_result = sprintf('%s:%d', $_SERVER['REMOTE_ADDR'], $_SERVER['SERVER_PORT']);
+		return $cached_result = sprintf('%s:%d',
+			$_SERVER['REMOTE_ADDR'], $_SERVER['SERVER_PORT']
+		);
 }
 
 /// \brief Sets HTTP response, with an additional custom response message
@@ -224,7 +235,17 @@ function npps_http_code(int $response_code, string $response_message = '')
 		header($_SERVER['SERVER_PROTOCOL']." $response_code $response_message");
 }
 
-/// \brief Class used for npps_begin_transaction(), npps_end_transaction(), and npps_commit_transaction()
+/// \brief Logs specificed message to `message` field in the response data
+///        and in web server log
+/// \param text Text to log
+function npps_log(string $text)
+{
+	error_log($text, 4);
+	echo $text;
+}
+
+/// \brief Class used for npps_begin_transaction(), npps_end_transaction(),
+///        and npps_commit_transaction()
 final class npps_nested_transaction
 {
 	private $nested_count = 0;
@@ -290,13 +311,15 @@ function npps_begin_transaction()
 
 /// \brief Ends transaction. The internal counter is subtracted by 1.
 ///        If internal counter reaches zero, then transaction to DB is started.
-/// \exception Exception Thrown if the transaction is unbalanced (called without npps_begin_transaction())
+/// \exception Exception Thrown if the transaction is unbalanced
+///            (called without npps_begin_transaction())
 function npps_end_transaction()
 {
 	npps_nested_transaction::instance()->commit();
 }
 
-/// \brief Identical to npps_commit_transaction(), but always starts transaction to DB and set internal counter to 0.
+/// \brief Identical to npps_commit_transaction(), but always starts transaction
+///        to DB and set internal counter to 0.
 function npps_commit_transaction()
 {
 	npps_nested_transaction::instance()->commit_force();
@@ -304,8 +327,10 @@ function npps_commit_transaction()
 
 /// \brief Get configuration value from configuration file(npps.ini)
 /// \param config_name The configuration name
-/// \param access_outside Makes the configuration to allow access to all configurations
-/// \returns Value of the configuration (can be NULL) or NULL if configuration name is not exists.
+/// \param access_outside Makes the configuration to allow access to all
+///        configurations
+/// \returns Value of the configuration (can be NULL) or NULL if configuration
+///          name is not exists.
 function npps_config(string $config_name = '', bool $access_outside = false)
 {
 	static $config_list = NULL;
@@ -328,7 +353,7 @@ function npps_config(string $config_name = '', bool $access_outside = false)
 		return $config_list;	// Return configuration list instead
 	
 	if($CURRENT_MODULE && $CURRENT_ACTION)
-		$module_action = "$CURENT_MODULE/$CURRENT_ACTION";
+		$module_action = "$CURRENT_MODULE/$CURRENT_ACTION";
 	
 	if($access_outside)
 	{
@@ -339,7 +364,10 @@ function npps_config(string $config_name = '', bool $access_outside = false)
 		{
 			case 1:
 			{
-				if(isset($config_list[$class_access[0]]) && !is_array($config_list[$class_access[0]]))
+				if(
+					isset($config_list[$class_access[0]]) &&
+					!is_array($config_list[$class_access[0]])
+				)
 					return $config_list[$class_access[0]];
 				
 				break;
@@ -383,7 +411,10 @@ function npps_config(string $config_name = '', bool $access_outside = false)
 		}
 		
 		// Third priority: get config in global
-		if(isset($config_list[$config_name]) && !is_array($config_list[$config_name]))
+		if(
+			isset($config_list[$config_name]) &&
+			!is_array($config_list[$config_name])
+		)
 			return $config_list[$config_name];
 		
 		// No matches.
@@ -391,10 +422,12 @@ function npps_config(string $config_name = '', bool $access_outside = false)
 	}
 }
 
-/// \brief Calls module/action (and only module, not handler) and returns it's response.
+/// \brief Calls module/action (and only module, not handler) and returns it's
+///        response.
 /// \param module_action <module>/<action> to be called
 /// \param request_data The module request_data, if any
-/// \returns Array of the response if request is success, integer if request can't be statisfied, or NULL on failure.
+/// \returns Response data in `array` on success, `integer` if request
+///          can't be statisfied, or `NULL` on failure.
 function npps_call_module(string $module_action, array $request_data = [])
 {
 	global $REQUEST_HEADERS;
