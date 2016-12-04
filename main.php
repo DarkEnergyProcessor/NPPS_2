@@ -188,7 +188,7 @@ $MAIN_SCRIPT_HANDLER = function(
 		}
 		
 		$request_data = json_decode(
-			mb_convert_encoding($_POST['request_data'], 'UTF-8', 'UTF-8'),
+			$_POST['request_data'],
 			true
 		);
 		
@@ -247,7 +247,7 @@ $MAIN_SCRIPT_HANDLER = function(
 	else
 	{
 		$cred = npps_query('SELECT login_key, login_pwd FROM `logged_in` WHERE token = ?', 's', $TOKEN)[0];
-		$connected_uid = user_id_from_credentials($cred['login_key'], $cred['login_pwd']);
+		$connected_uid = user_id_from_credentials($cred['login_key'], $cred['login_pwd'], $TOKEN);
 		
 		if($connected_uid == 0)
 			goto invalid_credentials;
