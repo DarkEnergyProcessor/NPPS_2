@@ -23,7 +23,7 @@ $user_id = npps_query('
 	$REQUEST_DATA["login_key"], $REQUEST_DATA["login_passwd"]
 );
 
-if($user_id && isset($user_id[0])) $user_id = $user_id[0][0];
+if($user_id && isset($user_id[0])) $user_id = $user_id[0]["user_id"];
 else
 {
 	echo 'Serious internal error!';
