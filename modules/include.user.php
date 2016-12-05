@@ -35,13 +35,18 @@ final class npps_user
 		'friend_points' => ['is_integer', 'i'],
 		'paid_loveca' => ['is_integer', 'i'],
 		'free_loveca' => ['is_integer', 'i'],
-		'max_lp' => ['is_integer', 'i'],
-		'max_friend' => ['is_integer', 'i'],
+		'max_lp' => [],
+		'max_friend' => [],
 		'overflow_lp' => ['is_integer', 'i'],
-		'full_lp_recharge' => ['is_integer', 'i'],
+		'full_lp_recharge' => [],
+		'muse_random_live_lock' => ['is_integer', 'i'],
+		'aqua_random_live_lock' => ['is_integer', 'i'],
 		'max_unit' => ['is_integer', 'i'],
 		'max_unit_loveca' => ['is_integer', 'i'],
 		'main_deck' => ['is_integer', 'i'],
+		'secretbox_gauge' => ['is_integer', 'i'],
+		'muse_free_gacha' => ['is_integer', 'i'],
+		'aqua_free_gacha' => ['is_integer', 'i'],
 		'normal_sticker' => ['is_integer', 'i'],
 		'silver_sticker' => ['is_integer', 'i'],
 		'gold_sticker' => ['is_integer', 'i'],
@@ -51,6 +56,8 @@ final class npps_user
 		'achievement_table' => [],
 		'item_table' => [],
 		'unit_table' => [],
+		'unit_support_table' => [],
+		'sis_table' => [],
 		'deck_table' => [],
 		'sticker_table' => [],
 		'login_bonus_table' => [],
@@ -68,9 +75,7 @@ final class npps_user
 	/// \exception Exception thrown if user ID doesn't exist
 	protected function __construct(int $user_id)
 	{
-		$temp_data = npps_query("
-			SELECT * FROM `users`
-			WHERE user_id = $user_id");
+		$temp_data = npps_query("SELECT * FROM `users` WHERE user_id = $user_id");
 		
 		if(count($temp_data) == 0)
 			throw new Exception("User ID $user_id doesn't exist");
@@ -120,6 +125,7 @@ final class npps_user
 			'free_sns_coin' => $this->free_loveca,
 			'social_point' => $this->friend_points,
 			'unit_max' => $this->max_unit,
+			'current_energy' => $total_lp,
 			'energy_max' => $this->max_lp,
 			'energy_full_time' => to_datetime($this->full_lp_recharge),
 			'energy_full_need_time' => $lp_time_charge,
@@ -131,8 +137,171 @@ final class npps_user
 	}
 	
 	/// \brief Adds LP to specificed user
-	public function add_lp() {
+	/// \param amount Amount of LP to be added to player
+	public function add_lp(int $amount) {
 		global $UNIX_TIMESTAMP;
+		
+		$lp_amount_current = (int)floor(
+			($this->full_lp_recharge - $UNIX_TIMESTAMP) / 360
+		);
+		
+		if($lp_amount_current <= 0)
+		{
+			// LP is full. Add to overflow LP
+			$this->overflow_lp += $amount;
+			return;
+		}
+		
+		// Check if amount is enough to full charge LP
+		$amount_time = $amount * 360;
+		$time_remaining = $this->full_lp_recharge - $amount_time;
+		
+		if($time_remaining < $UNIX_TIMESTAMP)
+		{
+			// There's overflow
+			$overflow_amount = (int)floor(
+				($UNIX_TIMESTAMP - $time_remaining) / 360
+			);
+			
+			$this->set_protected('full_lp_recharge', $UNIX_TIMESTAMP, 'i');
+			$this->overflow_lp = $overflow_amount;
+		}
+		
+		// Decrease time
+		$this->set_protected('full_lp_recharge', $time_remaining, 'i');
+	}
+	
+	/// \brief Subtract LP of user
+	/// \param amount Amount of LP to be subtracted
+	public function sub_lp(int $amount)
+	{
+		global $UNIX_TIMESTAMP;
+		
+		$overflow_amount = $this->overflow_lp - $amount;
+		
+		if($overflow_amount < 0)
+		{
+			// Decrease LP time
+			$time_recharge = $UNIX_TIMESTAMP + $overflow_amount * -360;
+			$this->set_protected('full_lp_recharge', $time_recharge, 'i');
+			$this->overflow_lp = 0;
+			
+			return;
+		}
+		
+		// Simply decrease overflow LP
+		$this->overflow_lp = $overflow_amount;
+	}
+	
+	/// \brief Check if player has enough LP
+	/// \param amount The amount of LP to check
+	/// \returns `true` if there's enough LP with specificed amount, `false`
+	///          otherwise
+	public function is_enough_lp(int $amount): bool
+	{
+		global $UNIX_TIMESTAMP;
+		
+		$overflow_amount = $this->overflow_lp - $amount;
+		
+		if($overflow_amount >= 0)
+			// enough LP
+			return true;
+		
+		if(($this->full_lp_recharge + $amount * 360 - $UNIX_TIMESTAMP) >=
+		   ($this->max_lp * 360)
+		)
+			// enough LP
+			return true;
+		
+		// not enough LP
+		return false;
+	}
+	
+	/// \brief Adds exp to specificed user. Also adds LP if there's rank up.
+	/// \param exp Amount of EXP to be added
+	/// \returns Array with `before` and `after` key which contains these keys
+	///          - exp
+	///          - level
+	///          - max_lp
+	///          - max_friend
+	public function add_exp(int $exp): array
+	{
+		$current_level = $this->level;
+		$need_exp = user_exp_requirement_recursive($this->level);
+		$now_exp = $this->current_exp + $exp;
+		
+		while($now_exp >= $need_exp)
+		{
+			$this->add_lp(25 + intdiv(++$current_level, 2));
+			$need_exp += user_exp_requirement($current_level);
+		}
+		
+		$now_lp = 25 + intdiv($current_level, 2);
+		$now_friend = 10 + intdiv($current_level, 5);
+		
+		$before_data = [
+			'exp' => $this->current_exp,
+			'level' => $this->level,
+			'max_lp' => $this->max_lp,
+			'max_friend' => $this->max_friend
+		];
+		
+		return [
+			'before' => $before_data,
+			'after' => [
+				'exp' => $this->set_protected('current_exp', $now_exp, 'i'),
+				'level' => $this->set_protected('level', $current_level, 'i'),
+				'max_lp' => $this->set_protected('max_lp', $now_lp, 'i'),
+				'max_friend' => $this->set_protected(
+									'max_friend', $now_friend, 'i'
+								)
+			]
+		];
+	}
+	
+	/// \brief Unlock subscenario of specificed unit ID
+	/// \param unit_id The unit ID of it's subscenario to unlock
+	/// \returns `subscenario_id` on success, 0 if already unlocked, -1 on fail
+	public function unlock_subscenario(int $unit_id)
+	{
+		$ss_db = npps_get_database('subscenario');
+		$ss_id = $ss_db->query("
+			SELECT subscenario_id FROM `subscenario_m`
+			WHERE unit_id = $unit_id"
+		);
+		
+		if(count($ss_id) > 0)
+			$ss_id = $ss_id[0]['subscenario_id'];
+		else
+			return -1;
+		
+		$ss_track = $this->user_data['subscenario_tracking'];
+		$ss_data = strlen($ss_track) > 0 ? explode(',', $ss_track) : [];
+		$is_unlocked = false;
+		
+		array_walk($ss_data,
+			function($v, $k) use($ss_id, &$is_unlocked)
+			{
+				if($is_unlocked == false && (
+					strcmp(strval($v), strval($ss_id)) == 0 ||
+					strcmp(strval($v), "!$ss_id") == 0)
+				)
+					$is_unlocked = true;
+			}
+		);
+		
+		if($is_unlocked)
+			return 0;
+		
+		$ss_data[] = strval($ss_id);
+		$iss_data = implode(',', $ss_data);
+		npps_query(
+			"UPDATE `users` SET subscenario_tracking = ?
+			WHERE user_id = $user_id", 's', $iss_data
+		);
+		$this->user_data['subscenario_tracking'] = $iss_data;
+		
+		return $ss_id;
 	}
 	
 	/// PHP __get magic methods
@@ -163,6 +332,29 @@ final class npps_user
 		}
 		
 		throw new Exception("Property $name can't be set or doesn't exist");
+	}
+	
+	/// \brief Sets protected property/field
+	/// \param name The field name
+	/// \param val The value
+	/// \param type The value SQL datatype char (`i` for integer for example)
+	/// \returns `val`
+	/// \exception Exception Thrown if specificed property doesn't exist
+	protected function set_protected(string $name, $val, string $type)
+	{
+		if(isset(npps_user::$changeable[$name]))
+		{
+			// Update value in this class and database
+			$this->user_data[$name] = $val;
+			npps_query("
+				UPDATE `users` SET $name = ?
+				WHERE user_id = {$this->user_id}
+			", $type, $val);
+			
+			return $val;
+		}
+		
+		throw new Exception("Property $name doesn't exist");
 	}
 };
 
@@ -198,11 +390,16 @@ function user_create(string $key, string $pwd): int
 			achievement_table,
 			item_table,
 			unit_table,
+			unit_support_table,
+			sis_table,
 			deck_table,
 			sticker_table,
 			login_bonus_table,
 			album_table
-		) VALUES (?, ?, ?, ?, ?, ?, '', '', '', '', '', '', '', '', '', '', '')
+		) VALUES
+			(?, ?, ?, ?, ?, ?,
+			 '', '', '', '', '', '', '', '', '', '', '', '', ''
+		)
 		",
 		'ssiiii', $user_data))
 	{
@@ -252,7 +449,13 @@ function user_configure(int $user_id, string $invite_code = NULL): bool
 	return false;
 }
 
-/* Returns User ID or 0 if fail. Negative value means the user is banned */
+/// \brief Gets user ID from the specificed username, password, and token.
+///        Used for verification
+/// \param uid The player login key/username
+/// \param pwd The player login password
+/// \param tkn The current token
+/// \returns `user_id` on success, 0 on fail, -`user_id` if the player account
+///          is locked.
 function user_id_from_credentials(string $uid, string $pwd, string $tkn): int
 {
 	$arr = npps_query('SELECT login_key FROM `logged_in` WHERE token = ?', 's', $tkn);
@@ -280,11 +483,12 @@ function user_id_from_credentials(string $uid, string $pwd, string $tkn): int
 
 /// \brief Sets user last active time to current time
 /// \param uid The player user ID
+/// \deprecated Use `last_active` property in npps_user instead.
 function user_set_last_active(int $uid)
 {
 	global $UNIX_TIMESTAMP;
 	
-	npps_unit::get_instance($uid)->last_active = $UNIX_TIMESTAMP;
+	npps_user::get_instance($uid)->last_active = $UNIX_TIMESTAMP;
 }
 
 /// \brief Gets required EXP for the specificed rank
@@ -310,177 +514,4 @@ function user_exp_requirement_recursive(int $rank): int
 		$sum += user_exp_requirement($i);
 	
 	return $sum;
-}
-
-function user_sub_lp(int $user_id, int $amount)
-{
-	$lp_info = npps_query("SELECT full_lp_recharge, overflow_lp FROM `users` WHERE user_id = $user_id")[0];
-	$overflow_amount = $lp_info[1] - $amount;
-	
-	if($overflow_amount < 0)
-	{
-		/* Decrease full_lp_recharge too */
-		$time_recharge = $UNIX_TIMESTAMP + ($overflow_amount * (-1)) * 360;
-		npps_query("UPDATE `users` SET full_lp_recharge = $time_recharge, overflow_lp = 0 WHERE user_id = $user_id");
-		
-		return;
-	}
-	
-	/* Simply decrease the overflow LP */
-	npps_query("UPDATE `users` SET overflow_lp = $overflow_amount WHERE user_id = $user_id");
-}
-
-function user_is_enough_lp(int $user_id, int $amount): bool
-{
-	global $UNIX_TIMESTAMP;
-	
-	$lp_info = npps_query("SELECT full_lp_recharge, overflow_lp, max_lp FROM `users` WHERE user_id = $user_id")[0];
-	$overflow_amount = $lp_info[1] - $amount;
-	
-	if($overflow_amount >= 0)
-		/* Enough LP */
-		return true;
-	
-	if(($lp_info[0] + $amount * 360 - $UNIX_TIMESTAMP) >= ($lp_info[2] * 360))
-		/* Enough LP */
-		return true;
-	
-	/* Not enough LP */
-	return false;
-}
-
-/* increase user experience and returns these infos (before and after) */
-/* - exp
-   - level
-   - max_lp
-   - max_friend
-*/
-function user_add_exp(int $user_id, int $exp): array
-{
-	$before_rank_up = npps_query("SELECT level, current_exp, max_lp, max_friend FROM `users` WHERE user_id = $user_id")[0];
-	$current_level = $before_rank_up[0];
-	$need_exp = user_exp_requirement_recursive($before_rank_up[0]);
-	$now_exp = $before_rank_up[1] + $exp;
-	
-	while($now_exp >= $need_exp)
-	{
-		user_add_lp($user_id, 25 + intdiv(++$current_level, 2));
-		$need_exp += user_exp_requirement($current_level);
-	}
-	
-	$now_lp = 25 + intdiv($current_level, 2);
-	$now_friend = 10 + intdiv($current_level, 5);
-	
-	npps_query("UPDATE `users` SET level = $current_level, current_exp = $now_exp, next_exp = $need_exp, max_lp = $now_lp, max_friend = $now_friend WHERE user_id = $user_id");
-	
-	return [
-		'before' => [
-			'exp' => $before_rank_up[0],
-			'level' => $before_rank_up[1],
-			'max_lp' => $before_rank_up[2],
-			'max_friend' => $before_rank_up[3]
-		],
-		'after' => [
-			'exp' => $now_exp,
-			'level' => $current_level,
-			'max_lp' => $now_lp,
-			'max_friend' => $now_friend
-		]
-	];
-}
-
-/* Is player can do free gacha? */
-function user_is_free_gacha(int $user_id): bool
-{
-	global $UNIX_TIMESTAMP;
-	
-	$temp = npps_query("SELECT next_free_gacha FROM `free_gacha_tracking` WHERE user_id = $user_id");
-	
-	return count($temp) == 0 ? true : $temp[0][0] >= $UNIX_TIMESTAMP;
-}
-
-/* Set "free gacha" flag to false */
-function user_disable_free_gacha(int $user_id)
-{
-	global $DATABASE;
-	global $UNIX_TIMESTAMP;
-	
-	npps_query('INSERT OR IGNORE INTO `free_gacha_tracking` VALUES (?, ?)', 'ii', $user_id, $UNIX_TIMESTAMP - ($UNIX_TIMESTAMP % 86400) + 86400);
-}
-
-function user_get_free_gacha_timestamp(int $user_id): int
-{
-	$temp = npps_query("SELECT next_free_gacha FROM `free_gacha_tracking` WHERE user_id = $user_id");
-	
-	return count($temp) == 0 ? 0 : $temp[0][0];
-}
-
-function user_get_gauge(int $user_id, bool $unmul = false): int
-{
-	$temp = npps_query("SELECT gauge FROM `secretbox_gauge` WHERE user_id = $user_id");
-	
-	return count($temp) == 0 ? 0 : ($unmul ? $temp[0][0] : $temp[0][0] * 10);
-}
-
-/* returns cycle how many times it already beyond 100 */
-function user_increase_gauge(int $user_id, int $amount = 1): int
-{
-	$temp = user_get_gauge($user_id, true) + $amount;
-	$cycle = 0;
-	
-	for(; $temp >= 10; $temp -= 10)
-		$cycle++;
-	
-	npps_query('REPLACE INTO `secretbox_gauge` VALUES(?, ?)', 'ii', $user_id, $temp);
-	return $cycle;
-}
-
-/* returns true if success, false if not enough loveca */
-function user_sub_loveca(int $user_id, int $amount): bool
-{
-	$loveca = npps_query("SELECT paid_loveca, free_loveca FROM `users` WHERE user_id = $user_id")[0];
-	
-	if($loveca['paid_loveca'] >= $amount)
-		$loveca['paid_loveca'] -= $amount;
-	else
-		if($loveca['free_loveca'] + $loveca['paid_loveca'] >= $amount)
-		{
-			$loveca['free_loveca'] -= $amount - $loveca['paid_loveca'];
-			$loveca['paid_loveca'] = 0;
-		}
-		else
-			return false;
-	
-	return !!npps_query('UPDATE `users` SET paid_loveca = ?, free_loveca = ? WHERE user_id = ?', 'iii', $loveca['paid_loveca'], $loveca['free_loveca'], $user_id);
-}
-
-/* returns the subscenario id, 0 if already unlocked, -1 on fail */
-function user_subscenario_unlock(int $user_id, int $unit_id): int
-{
-	$subscenario_db = npps_get_database('subscenario');
-	$subscenario_tracking = npps_query("SELECT subscenario_tracking FROM `users` WHERE user_id = $user_id")[0]['subscenario_tracking'];
-	$subscenario_data = strlen($subscenario_tracking) > 0 ? explode(',', $subscenario_tracking) : [];
-	$subscenario_id = $subscenario_db->execute_query("SELECT subscenario_id FROM `subscenario_m` WHERE unit_id = $unit_id");
-	
-	if(count($subscenario_id) > 0)
-		$subscenario_id = $subscenario_id[0]['subscenario_id'];
-	else
-		return -1;
-	
-	$is_unlocked = false;
-	array_walk($subscenario_data, function($v, $k) use($subscenario_id, &$is_unlocked)
-		{
-			if($is_unlocked == false && (strcmp(strval($v), strval($subscenario_id)) == 0 || strcmp(strval($v), "!$subscenario_id") == 0))
-				$is_unlocked = true;
-		}
-	);
-	
-	if($is_unlocked)
-		return 0;
-	
-	$subscenario_data[] = strval($subscenario_id);
-	npps_query("UPDATE `users` SET subscenario_tracking = ? WHERE user_id = $user_id",
-		's', implode(',', $subscenario_data));
-	
-	return $subscenario_id;
 }

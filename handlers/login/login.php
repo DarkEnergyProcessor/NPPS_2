@@ -21,7 +21,7 @@ if($connected_user_id == 0)
 else if($connected_user_id < 0)
 {
 	// Account is locked
-	npps_http_code(423, 'Locked');
+	npps_http_code(423, 'Account Locked');
 	return false;
 }
 

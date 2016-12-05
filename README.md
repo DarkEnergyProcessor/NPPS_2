@@ -15,7 +15,7 @@ good security.
 
 ###System Requirements
 
-* PHP 7.0 (PHP 7.1-Relase Candidate is untested).
+* PHP 7.0 or above (PHP 7.1 also work)
 
 * MBString PHP extension.
 

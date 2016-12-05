@@ -6,6 +6,7 @@
 
 /// \file main.php
 
+ini_set('html_errors', false);
 require_once('error_codes.php');
 define('MAIN_INVOKED', '0.0.1 alpha', true);
 
@@ -64,7 +65,7 @@ set_exception_handler(function($x)
 });
 
 /// \brief Function to handle shutdown procedure
-$HANDLER_SHUTDOWN = function()
+function npps_shutdown()
 {
 	global $MAINTENANCE_MODE;
 	global $REQUEST_HEADERS;
@@ -88,13 +89,27 @@ $HANDLER_SHUTDOWN = function()
 	}
 	
 	// Check if the request fails
-	if($REQUEST_SUCCESS == false)
+	if($REQUEST_SUCCESS != 1)
 	{
-		$output = [
-			'message' => $contents
-		];
+		$output = NULL;
 		
-		if(http_response_code() == 200)
+		if($REQUEST_SUCCESS == 0)
+		{
+			header('status_code: 720');
+			$output = [
+				'response_data' => ['error_code' => 200],
+				'status_code' => 720
+			];
+			
+			if(strlen($contents) > 0)
+				$output['message'] = $contents;
+		}
+		else
+			$output = [
+				'message' => $contents
+			];
+		
+		if(http_response_code() == 200 && $REQUEST_SUCCESS == (-1))
 			// If it's not previously set, then set it
 			npps_http_code(error_get_last() == NULL ? 403 : 500);
 		
@@ -137,27 +152,24 @@ $HANDLER_SHUTDOWN = function()
 	ob_end_flush();
 	
 	exit;
-};
+}
 
 /// \brief NPPS main script handler. Not merged to main() to prevent variables
 ///        pollution
-/// \param BUNDLE Bundle-Version value from header
 /// \param USER_ID Player user ID
 /// \param TOKEN Player token
-/// \param OS OS value from header
 /// \param PLATFORM_ID Platform-Type value from header
-/// \param OS_VERSION OS-Version value from header
-/// \param TIMEZONE TimeZone value from header
 /// \param module module/handler to be accessed
-/// \param action action in module/handler to be accessed. NULL if module is
+/// \param action action in module/handler to be accessed. `NULL` if module is
 ///        `api`
-/// \returns `true` if request success, `false` otherwise.
-$MAIN_SCRIPT_HANDLER = function(
+/// \returns 1 if request success, 0 if request failed in handler, -1 if
+///          request failed in module.
+function npps_main_script_handler(
 	int& $USER_ID,
 	$TOKEN,
 	int $PLATFORM_ID,
 	string $module,
-	$action = NULL): bool
+	$action = NULL): int
 {
 	global $REQUEST_HEADERS;
 	global $RESPONSE_ARRAY;
@@ -165,6 +177,12 @@ $MAIN_SCRIPT_HANDLER = function(
 	global $TEXT_TIMESTAMP;
 	
 	$request_data = [];
+	// Used to isolate variables when using include
+	$isolator_call = function(string $___FILE, $REQUEST_DATA)
+		use($UNIX_TIMESTAMP, $TEXT_TIMESTAMP, &$TOKEN, &$USER_ID)
+	{
+		return (include($___FILE));
+	};
 	
 	if(isset($_POST['request_data']))
 	{
@@ -174,7 +192,7 @@ $MAIN_SCRIPT_HANDLER = function(
 			{
 				echo 'X-Message-Code header required!';
 				http_response_code(400);
-				return false;
+				return 0;
 			}
 			
 			if(strcmp($REQUEST_HEADERS['x-message-code'],
@@ -183,7 +201,7 @@ $MAIN_SCRIPT_HANDLER = function(
 			{
 				echo 'Invalid X-Message-Code';
 				http_response_code(400);
-				return false;
+				return 0;
 			}
 		}
 		
@@ -192,10 +210,10 @@ $MAIN_SCRIPT_HANDLER = function(
 			true
 		);
 		
-		if($request_data == NULL)
+		if($request_data === NULL)
 		{
 			echo "Invalid JSON data: {$_POST['request_data']}";
-			return false;
+			return 0;
 		}
 	}
 	
@@ -211,16 +229,15 @@ $MAIN_SCRIPT_HANDLER = function(
 		
 		if(is_file($modname))
 		{
-			$REQUEST_DATA = $request_data;
 			$CURRENT_MODULE = $module;
 			$CURRENT_ACTION = $action;
-			$val = NULL; {$val=include($modname);}
+			$val = $isolator_call($modname, $request_data);
 			
 			$CURRENT_MODULE = NULL;
 			$CURRENT_ACTION = NULL;
 			
 			if($val === false)
-				return false;
+				return 0;
 			
 			if(is_integer($val))
 			{
@@ -233,7 +250,7 @@ $MAIN_SCRIPT_HANDLER = function(
 				$RESPONSE_ARRAY['status_code'] = $val[1];
 			}
 			
-			return true;
+			return 1;
 		}
 	}
 	
@@ -242,81 +259,95 @@ $MAIN_SCRIPT_HANDLER = function(
 	{
 		invalid_credentials:
 		echo 'Invalid login, password, user_id, and/or token!';
-		return false;
+		return 0;
 	}
 	else
 	{
-		$cred = npps_query('SELECT login_key, login_pwd FROM `logged_in` WHERE token = ?', 's', $TOKEN)[0];
-		$connected_uid = user_id_from_credentials($cred['login_key'], $cred['login_pwd']);
+		$cred = npps_query('
+			SELECT login_key, login_pwd FROM `logged_in` WHERE token = ?',
+			's', $TOKEN
+		)[0];
+		$connected_uid = user_id_from_credentials(
+			$cred['login_key'],
+			$cred['login_pwd'],
+			$TOKEN
+		);
 		
 		if($connected_uid == 0)
 			goto invalid_credentials;
 		else if($connected_uid < 0)
 		{
-			http_response_code(423);
-			header("HTTP/1.1 423 Locked");
-			return false;
+			npps_http_code(423, 'Account Locked');
+			return 0;
 		}
 	}
 	
-	/* ok now modules */
+	// Module mode
 	if(strcmp($module, 'api') == 0)
 	{
-		/* Multiple module/action calls */
-		if(count($request_data) > MILTI_REQUEST_LIMIT)
+		// Multiple module/action calls
+		if(count($request_data) > MULTI_REQUEST_LIMIT)
 		{
 			echo '/api request limit exceeded!';
-			return false;
+			return 0;
 		}
 		
-		$RESPONSE_ARRAY["response_data"] = [];
-		$RESPONSE_ARRAY["status_code"] = 200;
+		$RESPONSE_ARRAY['response_data'] = [];
+		$RESPONSE_ARRAY['status_code'] = 200;
 		
-		/* Call all modules in order */
-		foreach($request_data as $rd)
+		// Call all modules in order
+		foreach($request_data as $i => $rd)
 		{
-			$modname = "modules/{$rd["module"]}/{$rd["action"]}.php";
-			
-			if(is_file($modname))
+			if(isset($rd['module']) && isset($rd['action']))
 			{
-				$REQUEST_DATA = $rd;
-				$CURRENT_MODULE = $module;
-				$CURRENT_ACTION = $action;
-				$val = NULL; {$val=include($modname);}
-				
-				$CURRENT_MODULE = NULL;
-				$CURRENT_ACTION = NULL;
-				
-				if($val === false)
-					return false;
-				
-				if(is_integer($val))
-					$RESPONSE_ARRAY["response_data"][] = [
-						"result" => ['error_code' => $val],
-						"status" => 600,
-						"commandNum" => false,
-						"timeStamp" => $UNIX_TIMESTAMP
-					];
+				$modname = "modules/{$rd['module']}/{$rd['action']}.php";
+
+				if(is_file($modname))
+				{
+					$REQUEST_DATA = $rd;
+					$CURRENT_MODULE = $module;
+					$CURRENT_ACTION = $action;
+					$val = $isolator_call($modname, $rd);
+
+					$CURRENT_MODULE = NULL;
+					$CURRENT_ACTION = NULL;
+
+					if($val === false)
+						return false;
+
+					if(is_integer($val))
+						$RESPONSE_ARRAY['response_data'][] = [
+							'result' => ['error_code' => $val],
+							'status' => 600,
+							'commandNum' => false,
+							'timeStamp' => $UNIX_TIMESTAMP
+						];
+					else
+						$RESPONSE_ARRAY['response_data'][] = [
+							'result' => $val[0],
+							'status' => $val[1],
+							'commandNum' => false,
+							'timeStamp' => $UNIX_TIMESTAMP
+						];
+				}
 				else
-					$RESPONSE_ARRAY["response_data"][] = [
-						"result" => $val[0],
-						"status" => $val[1],
-						"commandNum" => false,
-						"timeStamp" => $UNIX_TIMESTAMP
-					];
+				{
+					echo "Req idx $i: {$rd['module']}/{$rd['action']} not found";
+					return -1;
+				}
 			}
 			else
 			{
-				echo "One of the module not found: {$rd['module']}/{$rd['action']}";
-				return false;
+				echo "Req idx $i: module/action key not found";
+				return -1;
 			}
 		}
 		
-		return true;
+		goto request_ok;
 	}
 	else if($action !== NULL)
 	{
-		/* Single module call in form /main.php/module/action */
+		// Single module call in form /main.php/module/action
 		$modname = "modules/$module/$action.php";
 			
 		if(is_file($modname))
@@ -324,13 +355,13 @@ $MAIN_SCRIPT_HANDLER = function(
 			$REQUEST_DATA = $request_data;
 			$CURRENT_MODULE = $module;
 			$CURRENT_ACTION = $action;
-			$val = NULL; {$val=include($modname);}
+			$val = $isolator_call($modname, $request_data);
 			
 			$CURRENT_MODULE = NULL;
 			$CURRENT_ACTION = NULL;
 			
 			if($val === false)
-				return false;
+				return -1;
 			
 			if(is_integer($val))
 			{
@@ -343,23 +374,28 @@ $MAIN_SCRIPT_HANDLER = function(
 				$RESPONSE_ARRAY["status_code"] = $val[1];
 			}
 			
-			return true;
+			goto request_ok;
 		}
 		
 		echo "Module not found! $module/$action", PHP_EOL;
-		return false;
+		return -1;
 	}
 	else
 	{
 		echo 'Invalid module/action';
-		return false;
+		return 0;
 	}
-};
+	
+	request_ok:
+	npps_user::get_instance($USER_ID)->last_active = $UNIX_TIMESTAMP;
+	
+	return 1;
+}
 
 /// \brief Function to process Authorize header
 /// \returns Returns string if array is supplied. Returns array if string is
 ///          supplied. **Returns false if the authorize parameter is invalid**
-function authorize_function($authorize)
+function npps_authorize_function($authorize)
 {
 	if(is_array($authorize))
 	{
@@ -431,7 +467,7 @@ function npps_main()
 	
 	// Check the authorize
 	if(isset($REQUEST_HEADERS['authorize']))
-		$AUTHORIZE_DATA = authorize_function($REQUEST_HEADERS['authorize']);
+		$AUTHORIZE_DATA = npps_authorize_function($REQUEST_HEADERS['authorize']);
 	if($AUTHORIZE_DATA === false)
 	{
 		echo 'Authorize header needed!';
@@ -519,7 +555,7 @@ function npps_main()
 	$DATABASE->initialize_environment();
 	
 	// Call main script handler
-	$REQUEST_SUCCESS = $MAIN_SCRIPT_HANDLER(
+	$REQUEST_SUCCESS = npps_main_script_handler(
 		$USER_ID,
 		$TOKEN,
 		$REQUEST_HEADERS['platform-type'],
@@ -545,7 +581,7 @@ function npps_main()
 		if(is_string($TOKEN))
 			$new_authorize['token'] = $TOKEN;
 		
-		header(sprintf('authorize: %s', authorize_function($new_authorize)));
+		header(sprintf('authorize: %s', npps_authorize_function($new_authorize)));
 	}
 	
 	// Exit. Let the shutdown function do the rest
@@ -554,7 +590,7 @@ function npps_main()
 
 if(!defined('WEBVIEW'))
 {
-	register_shutdown_function($HANDLER_SHUTDOWN);
+	register_shutdown_function('npps_shutdown');
 	ob_start();
 	npps_main();
 }
