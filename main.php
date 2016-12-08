@@ -7,7 +7,6 @@
 /// \file main.php
 
 ini_set('html_errors', false);
-require_once('error_codes.php');
 define('MAIN_INVOKED', '0.0.1 alpha', true);
 
 // Fixes nginx.
@@ -154,8 +153,8 @@ function npps_shutdown()
 	exit;
 }
 
-/// \brief NPPS main script handler. Not merged to main() to prevent variables
-///        pollution
+/// \brief NPPS main script handler. Not merged to npps_main() to prevent
+///        variable pollution
 /// \param USER_ID Player user ID
 /// \param TOKEN Player token
 /// \param PLATFORM_ID Platform-Type value from header

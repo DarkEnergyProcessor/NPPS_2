@@ -102,7 +102,7 @@ function npps_get_database(string $db_name = ''): DatabaseWrapper
 		if(strlen($db_name) == 0)
 			return $db_list[''] = $GLOBALS['DATABASE'];
 		
-		$xdb = new SQLite3Database("data/$db_name.db_");
+		$xdb = new SQLite3DatabaseWrapper("data/$db_name.db_");
 		return $db_list[$db_name] = $xdb;
 	}
 }
@@ -424,11 +424,19 @@ function npps_config(string $config_name = '', bool $access_outside = false)
 
 /// \brief Calls module/action (and only module, not handler) and returns it's
 ///        response.
+/// \param USER_ID The player user ID. Should be set to current `$USER_ID`
+///        variable
+/// \param TOKEN The current token. Should be set to current `$TOKEN` variable
 /// \param module_action <module>/<action> to be called
 /// \param request_data The module request_data, if any
 /// \returns Response data in `array` on success, `integer` if request
 ///          can't be statisfied, or `NULL` on failure.
-function npps_call_module(string $module_action, array $request_data = [])
+function npps_call_module(
+	int& $USER_ID,
+	&$TOKEN,
+	string $module_action,
+	array $request_data = []
+)
 {
 	global $REQUEST_HEADERS;
 	global $UNIX_TIMESTAMP;
@@ -436,6 +444,11 @@ function npps_call_module(string $module_action, array $request_data = [])
 	global $CURRENT_MODULE;
 	global $CURRENT_ACTION;
 	
+	$isolator_call = function(string $___FILE, $REQUEST_DATA)
+		use($UNIX_TIMESTAMP, $TEXT_TIMESTAMP, &$TOKEN, &$USER_ID)
+	{
+		return (include($___FILE));
+	};
 	$previous_module = $CURRENT_MODULE;
 	$previous_action = $CURRENT_ACTION;
 	
@@ -451,7 +464,7 @@ function npps_call_module(string $module_action, array $request_data = [])
 	foreach($request_data as $k => $v)
 		$REQUEST_DATA[$k] = $v;
 	
-	$val = NULL; {$val = include("modules/$module_action.php");}
+	$val = $isolator_call("modules/$module_action.php", $REQUEST_DATA);
 	
 	$CURRENT_MODULE = $previous_module;
 	$CURRENT_ACTION = $previous_action;
@@ -496,9 +509,11 @@ function npps_decryption_key(int $index = 0, bool $raw = true)
 		return NULL;
 }
 
-require('modules/include.unit.php');
+require('modules/include.const.php');
 require('modules/include.deck.php');
+require('modules/include.errcode.php');
 require('modules/include.item.php');
 require('modules/include.live.php');
 require('modules/include.token.php');
+require('modules/include.unit.php');
 require('modules/include.user.php');

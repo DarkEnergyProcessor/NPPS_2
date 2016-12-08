@@ -85,6 +85,7 @@ CREATE TABLE `users` (
 	max_friend INTEGER NOT NULL DEFAULT 10,					-- Max friend
 	overflow_lp INTEGER NOT NULL DEFAULT 0,					-- Amount of additional LP
 	full_lp_recharge INTEGER NOT NULL DEFAULT 0,			-- Unix time before the LP fully recharged.
+	last_live_play INTEGER NOT NULL DEFAULT 0,				-- Unix time last time player played a live show
 	muse_random_live_lock INTEGER NOT NULL DEFAULT 1,		-- Is the µ's random live is locked?
 	aqua_random_live_lock INTEGER NOT NULL DEFAULT 1,		-- Is the Aqours random live is locked?
 	max_unit INTEGER NOT NULL DEFAULT 120,					-- Maximum memberlist. Including the ones that increased with loveca.
@@ -102,7 +103,7 @@ CREATE TABLE `users` (
 	subscenario_tracking TEXT DEFAULT NULL,					-- Unlocked subscenario ID list. Add '!' to indicate it's already viewed. Comma separated (defaults to empty string)
 	unlocked_title TEXT NOT NULL,							-- Unlocked badge. Comma separated
 	unlocked_background TEXT NOT NULL,						-- Unlocked background. Comma separated
-	friend_list TEXT NOT NULL,								-- Friendlist in format <user ID>,<user ID>,...
+	friend_table TEXT NOT NULL,								-- The friend-related table name
 	present_table TEXT NOT NULL,							-- The present box table name
 	achievement_table TEXT NOT NULL,						-- The assignment table name
 	item_table TEXT NOT NULL,								-- The items table name (add_type = 1000)
@@ -164,8 +165,9 @@ CREATE TABLE `notice_list` (
 	notice_id INTEGER PRIMARY KEY AUTO_INCREMENT,	-- Notice ID. Auto increment.
 	receiver_user_id INTEGER NOT NULL,				-- To user_id
 	sender_user_id INTEGER NOT NULL,				-- From user_id/affector
-	notice_filter INTEGER NOT NULL,					-- Notice filter ID
-	message TEXT NOT NULL,							-- The message. Truncate to 15 character when sent to client
+	filter_id INTEGER NOT NULL,						-- Notice filter ID
+	notice_template_id INTEGER NOT NULL,			-- Notice template ID
+	message TEXT NOT NULL,							-- The message. Truncated to 15 character when sent to client
 	is_new BOOL NOT NULL DEFAULT 1,					-- Is unread?
 	is_pm BOOL NOT NULL DEFAULT 0,					-- Is private message?
 	is_replied BOOL DEFAULT 0						-- Is player already replied to this message?

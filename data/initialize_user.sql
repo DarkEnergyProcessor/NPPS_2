@@ -1,5 +1,10 @@
 -- This file contain user initialization
 
+CREATE TABLE `friend_$user_id` (
+	from_user_id INTEGER NOT NULL PRIMARY KEY,			-- The friend (request) user ID
+	is_approved INTEGER NOT NULL DEFAULT 0,				-- Is the friend request is approved?
+)
+
 CREATE TABLE `present_$user_id` (
 	incentive_idx INTEGER PRIMARY KEY AUTO_INCREMENT,	-- The item position
 	add_type INTEGER NOT NULL,							-- The item type ID
@@ -12,9 +17,9 @@ CREATE TABLE `present_$user_id` (
 );
 
 CREATE TABLE `achievement_$user_id` (
-	achievement_id INTEGER NOT NULL PRIMARY KEY,	-- The assignment id
-	start_time INTEGER NOT NULL,					-- Unix timestamp when this assignment added
-	end_time INTEGER,								-- Unix timestamp when this assignment end
+	achievement_id INTEGER NOT NULL PRIMARY KEY,	-- The achievement id
+	start_time INTEGER NOT NULL,					-- Unix timestamp when this achievement added
+	end_time INTEGER,								-- Unix timestamp when this achievement end
 	new_flag INTEGER NOT NULL DEFAULT 1,			-- Is new?
 	count INTEGER DEFAULT 0,						-- Internal counter.
 	complete_flag INTEGER NOT NULL DEFAULT 0,		-- Is complete?
@@ -37,7 +42,7 @@ CREATE TABLE `unit_$user_id` (
 	max_rank INTEGER DEFAULT 2,								-- Card max rank
 	display_rank INTEGER DEFAULT 1,							-- Card display. 2 = Show idolized, 1 = Show unidolized
 	unit_skill_level INTEGER NOT NULL DEFAULT 1,			-- Skill level
-	unit_skill_exp INTEGER NOT NULL DEFAULT 0,				-- Skill level EXP
+	unit_skill_exp INTEGER NOT NULL DEFAULT 0,				-- Skill level EXP. The next level EXP is automatically calcuated
 	max_hp INTEGER NOT NULL,								-- Card max HP
 	love INTEGER NOT NULL DEFAULT 0,						-- Card bond
 	max_love INTEGER NOT NULL,								-- Card max bond
@@ -99,6 +104,7 @@ INSERT INTO `deck_$user_id` VALUES (9, 'Team I', '0:0:0:0:0:0:0:0:0');
 -- Update users
 UPDATE `users` SET
 	invite_code = '$invite_code',
+	friend_table = 'friend_$user_id',
 	present_table = 'present_$user_id',
 	achievement_table = 'achievement_$user_id',
 	item_table = 'item_$user_id',
