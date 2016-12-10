@@ -41,11 +41,6 @@ CREATE TABLE `event_list` (
 	event_song_table TEXT NOT NULL						-- The event song ranking list table.
 );
 
-CREATE TABLE `free_gacha_tracking` (
-	user_id INTEGER NOT NULL PRIMARY KEY,	-- User ID who execute the free gacha
-	next_free_gacha INTEGER NOT NULL		-- Unix timestamp when the next free gacha.
-);
-
 CREATE TABLE `logged_in` (
 	login_key TEXT,											-- The associated login key or NULL if stil in "authkey"
 	login_pwd TEXT,											-- The associated login password or NULL if still in "authkey"
@@ -53,6 +48,14 @@ CREATE TABLE `logged_in` (
 	last_activity_time INTEGER NOT NULL,					-- Last activity time.
 	pseudo_unit_own_id INTEGER NOT NULL DEFAULT -1			-- Pseudo unit_owning_user_id to solve some problems related to unit.
 );
+
+CREATE TABLE `marquee_notice` (
+	marquee_id INTEGER PRIMARY KEY AUTO_INCREMENT,		-- Notice marquee ID. You should not use 0 or other negative IDs
+	text TEXT NOT NULL,									-- The notice marquee text
+	start_date INTEGER NOT NULL,						-- Unix timestamp when this notice should start be displayed
+	end_date INTEGER NOT NULL							-- Unix timestamp when this notice should no logner be displayed
+);
+
 CREATE TABLE `users` (
 	user_id INTEGER PRIMARY KEY AUTO_INCREMENT,				-- The user ID
 	login_key TEXT,											-- The associated login key
@@ -63,9 +66,10 @@ CREATE TABLE `users` (
 	locked BOOL NOT NULL DEFAULT 0,							-- Is the account banned?
 	tos_agree INTEGER NOT NULL DEFAULT 0,					-- Tos agree number.
 	create_date INTEGER NOT NULL,							-- When this account is created
-	first_choosen INTEGER NOT NULL DEFAULT 0,				-- The first choosen card ID in the game.
+	first_choosen INTEGER NOT NULL DEFAULT 0,				-- The first choosen unit ID in the game.
 	name VARCHAR(10) NOT NULL DEFAULT "Null",				-- Nickname
 	bio VARCHAR(105) NOT NULL DEFAULT "Hello!",				-- About me section.
+	unit_partner INTEGER NOT NULL DEFAULT 0,                          -- Unit Partner
 	invite_code VARCHAR(9),									-- Friend ID
 	last_active INTEGER NOT NULL,							-- Last active in unix timestamp
 	login_count INTEGER NOT NULL DEFAULT 0,					-- Last lbonus/execute execution timestamp
@@ -82,9 +86,15 @@ CREATE TABLE `users` (
 	max_friend INTEGER NOT NULL DEFAULT 10,					-- Max friend
 	overflow_lp INTEGER NOT NULL DEFAULT 0,					-- Amount of additional LP
 	full_lp_recharge INTEGER NOT NULL DEFAULT 0,			-- Unix time before the LP fully recharged.
+	last_live_play INTEGER NOT NULL DEFAULT 0,				-- Unix time last time player played a live show
+	muse_random_live_lock INTEGER NOT NULL DEFAULT 1,		-- Is the �'s random live is locked?
+	aqua_random_live_lock INTEGER NOT NULL DEFAULT 1,		-- Is the Aqours random live is locked?
 	max_unit INTEGER NOT NULL DEFAULT 120,					-- Maximum memberlist. Including the ones that increased with loveca.
-	max_unit_loveca INTEGER NOT NULL DEFAULT 0,				-- Amount of "Increase Member Limit".
+	max_unit_loveca INTEGER NOT NULL DEFAULT 0,				-- How many times "Increase Member Limit" is used.
 	main_deck INTEGER NOT NULL DEFAULT 1,					-- Which deck is set to "Main"?
+	secretbox_gauge INTEGER NOT NULL DEFAULT 0,				-- The secretbox gauge
+	muse_free_gacha INTEGER NOT NULL DEFAULT 0,				-- �'s part last free gacha
+	aqua_free_gacha INTEGER NOT NULL DEFAULT 0,				-- Aqours part last free gacha
 	normal_sticker INTEGER NOT NULL DEFAULT 0,				-- R stickers
 	silver_sticker INTEGER NOT NULL DEFAULT 0,				-- SR stickers
 	gold_sticker INTEGER NOT NULL DEFAULT 0,				-- SSR stickers
@@ -94,16 +104,19 @@ CREATE TABLE `users` (
 	subscenario_tracking TEXT DEFAULT NULL,					-- Unlocked subscenario ID list. Add '!' to indicate it's already viewed. Comma separated (defaults to empty string)
 	unlocked_title TEXT NOT NULL,							-- Unlocked badge. Comma separated
 	unlocked_background TEXT NOT NULL,						-- Unlocked background. Comma separated
-	friend_list TEXT NOT NULL,								-- Friendlist in format <user ID>,<user ID>,...
+	friend_table TEXT NOT NULL,								-- The friend-related table name
 	present_table TEXT NOT NULL,							-- The present box table name
 	achievement_table TEXT NOT NULL,						-- The assignment table name
 	item_table TEXT NOT NULL,								-- The items table name (add_type = 1000)
 	unit_table TEXT NOT NULL,								-- Unit list table name
+	unit_support_table TEXT NOT NULL,						-- Support unit table name
+	sis_table TEXT NOT NULL,								-- School Idol Skills table name
 	deck_table TEXT NOT NULL,								-- Deck list table name
 	sticker_table TEXT NOT NULL,							-- List of already exchanged seals (for item with limited amount)
 	login_bonus_table TEXT NOT NULL,						-- Login bonus tracking.
 	album_table TEXT NOT NULL								-- Album tracking.
 );
+
 CREATE TABLE `login_bonus` (
 	month INTEGER NOT NULL,					-- The month number
 	day INTEGER NOT NULL,					-- The day
@@ -112,6 +125,7 @@ CREATE TABLE `login_bonus` (
 	amount INTEGER NOT NULL,				-- Item amout
 	PRIMARY KEY(month, day)
 );
+
 CREATE TABLE `special_login_bonus` (
 	login_bonus_id INTEGER PRIMARY KEY,				-- Login bonus ID. You should not use 0
 	start_time INTEGER NOT NULL DEFAULT 0,			-- When the login bonus should start distributed
@@ -129,6 +143,7 @@ CREATE TABLE `sticker_shop_item` (
 	max_amount INTEGER NOT NULL DEFAULT -1,			-- Maximum amount that can be exchanged (or -1 for unlimited)
 	expire INTEGER DEFAULT NULL						-- Unix timestamp when the item no longer in sticker shop (or NULL for no expiration)
 );
+
 CREATE TABLE `wip_live` (
 	user_id INTEGER NOT NULL,					-- User ID who do the live.
 	live_difficulty_id INTEGER NOT NULL,		-- The live ID
@@ -140,38 +155,40 @@ CREATE TABLE `wip_live` (
 	live_data TEXT DEFAULT NULL,				-- Live-specific related data
 	started INTEGER NOT NULL					-- Used to prevent people from completing live too fast
 );
+
 CREATE TABLE `wip_scenario` (
 	user_id INTEGER NOT NULL,				-- User ID who started the scenario/subscenario
 	scenario_id INTEGER DEFAULT NULL,		-- Scenario ID or NULL if it's subscenario
 	subscenario_id INTEGER DEFAULT NULL		-- Subscenario ID or NULL if it's scenario
 );
+
 CREATE TABLE `notice_list` (
 	notice_id INTEGER PRIMARY KEY AUTO_INCREMENT,	-- Notice ID. Auto increment.
 	receiver_user_id INTEGER NOT NULL,				-- To user_id
 	sender_user_id INTEGER NOT NULL,				-- From user_id/affector
-	notice_filter INTEGER NOT NULL,					-- Notice filter ID
-	message TEXT NOT NULL,							-- The message. Truncate to 15 character when sent to client
+	filter_id INTEGER NOT NULL,						-- Notice filter ID
+	notice_template_id INTEGER NOT NULL,			-- Notice template ID
+	message TEXT NOT NULL,							-- The message. Truncated to 15 character when sent to client
 	is_new BOOL NOT NULL DEFAULT 1,					-- Is unread?
 	is_pm BOOL NOT NULL DEFAULT 0,					-- Is private message?
 	is_replied BOOL DEFAULT 0						-- Is player already replied to this message?
 );
+
 CREATE TABLE `live_information` (
-	live_difficulty_id INTEGER PRIMARY KEY,		-- The live ID
+	live_difficulty_id INTEGER,		            -- The live ID
 	user_id INTEGER NOT NULL,					-- The user ID
 	normal_live BOOL NOT NULL DEFAULT 1,		-- Is the live available in Hits? (used to track EX scores)
 	score INTEGER NOT NULL DEFAULT 0,			-- Highest score
 	combo INTEGER NOT NULL DEFAULT 0,			-- Highest combo
 	times INTEGER NOT NULL DEFAULT 0			-- x times played
 );
-CREATE TABLE `secretbox_gauge` (
-	user_id INTEGER NOT NULL PRIMARY KEY,		-- The user ID
-	gauge INTEGER NOT NULL DEFAULT 0			-- The gauge. The value will be multiplied by 10 automatically
-);
+
 CREATE TABLE `personal_notice` (
 	user_id INTEGER NOT NULL PRIMARY KEY,		-- The user ID who will receive it
 	title TEXT,									-- The personal notice title
 	contents TEXT								-- The personal notice text
 );
+
 /*
 You may want to add 1 dummy user in your list first so that you can Live Show!
 Table definition above is necessary for the server. The user-specific SQL structure is in initialize_user.sql
@@ -184,15 +201,105 @@ ChaFes event: initialize_event_challenge.sql
 */
 
 -- Insert birthday login bonus
-INSERT INTO `birthday_login_bonus` VALUES("17-01", CONCAT("January 17 is Hanayo Koizumi's birthday!", CHAR(10), "To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10), "as a Login Bonus today."), "assets/image/ui/login_bonus_extra/birthday_8_1.png", 3001, NULL, 5);	-- Hanayo
-INSERT INTO `birthday_login_bonus` VALUES("15-03", CONCAT("March 15 is Umi Sonoda's birthday!", CHAR(10), "To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10), "as a Login Bonus today."), "assets/image/ui/login_bonus_extra/birthday_9_1.png", 3001, NULL, 5);		-- Umi
-INSERT INTO `birthday_login_bonus` VALUES("19-04", CONCAT("April 19 is Maki Nishikino's birthday!", CHAR(10), "To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10), "as a Login Bonus today."), "assets/image/ui/login_bonus_extra/birthday_1_1.png", 3001, NULL, 5);		-- Maki
-INSERT INTO `birthday_login_bonus` VALUES("09-06", CONCAT("June 9 is Nozomi Tojo's birthday!", CHAR(10), "To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10), "as a Login Bonus today."), "assets/image/ui/login_bonus_extra/birthday_2_1.png", 3001, NULL, 5);	-- Nozomi
-INSERT INTO `birthday_login_bonus` VALUES("22-07", CONCAT("July 22 is Nico Yazawa's birthday!", CHAR(10), "To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10), "as a Login Bonus today."), "assets/image/ui/login_bonus_extra/birthday_3_1.png", 3001, NULL, 5);		-- Nico
-INSERT INTO `birthday_login_bonus` VALUES("03-08", CONCAT("August 3 is Honoka Kosaka's birthday!", CHAR(10), "To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10), "as a Login Bonus today."), "assets/image/ui/login_bonus_extra/birthday_4_1.png", 3001, NULL, 5);	-- Honoka
-INSERT INTO `birthday_login_bonus` VALUES("12-09", CONCAT("September 12 is Kotori Minami's birthday!", CHAR(10), "To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10), "as a Login Bonus today."), "assets/image/ui/login_bonus_extra/birthday_5_1.png", 3001, NULL, 5);	-- Kotori
-INSERT INTO `birthday_login_bonus` VALUES("21-10", CONCAT("October 21 is Eli Ayase's birthday!", CHAR(10), "To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10), "as a Login Bonus today."), "assets/image/ui/login_bonus_extra/birthday_6_1.png", 3001, NULL, 5);		-- Eli
-INSERT INTO `birthday_login_bonus` VALUES("01-11", CONCAT("November 1 is Rin Hoshizora's birthday!", CHAR(10), "To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10), "as a Login Bonus today."), "assets/image/ui/login_bonus_extra/birthday_7_1.png", 3001, NULL, 5);		-- Rin
+-- Hanayo
+INSERT INTO `birthday_login_bonus` VALUES(
+	"17-01",
+	CONCAT(
+		"January 17 is Hanayo Koizumi's birthday!", CHAR(10),
+		"To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10),
+		"as a Login Bonus today."
+	),
+	"assets/image/ui/login_bonus_extra/birthday_8_1.png",
+	3001, NULL, 5
+);
+-- Umi
+INSERT INTO `birthday_login_bonus` VALUES(
+	"15-03",
+	CONCAT(
+		"March 15 is Umi Sonoda's birthday!", CHAR(10),
+		"To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10),
+		"as a Login Bonus today."
+	),
+	"assets/image/ui/login_bonus_extra/birthday_9_1.png",
+	3001, NULL, 5
+);
+-- Maki
+INSERT INTO `birthday_login_bonus` VALUES(
+	"19-04",
+	CONCAT(
+		"April 19 is Maki Nishikino's birthday!", CHAR(10),
+		"To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10),
+		"as a Login Bonus today."
+	),
+	"assets/image/ui/login_bonus_extra/birthday_1_1.png",
+	3001, NULL, 5
+);
+-- Nozomi
+INSERT INTO `birthday_login_bonus` VALUES(
+	"09-06",
+	CONCAT(
+		"June 9 is Nozomi Tojo's birthday!", CHAR(10),
+		"To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10),
+		"as a Login Bonus today."
+	),
+	"assets/image/ui/login_bonus_extra/birthday_2_1.png",
+	3001, NULL, 5
+);
+-- Nico
+INSERT INTO `birthday_login_bonus` VALUES(
+	"22-07",
+	CONCAT(
+		"July 22 is Nico Yazawa's birthday!", CHAR(10),
+		"To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10),
+		"as a Login Bonus today."
+	),
+	"assets/image/ui/login_bonus_extra/birthday_3_1.png",
+	3001, NULL, 5
+);
+-- Honoka
+INSERT INTO `birthday_login_bonus` VALUES(
+	"03-08",
+	CONCAT(
+		"August 3 is Honoka Kosaka's birthday!", CHAR(10),
+		"To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10),
+		"as a Login Bonus today."
+	),
+	"assets/image/ui/login_bonus_extra/birthday_4_1.png",
+	3001, NULL, 5
+);
+-- Kotori
+INSERT INTO `birthday_login_bonus` VALUES(
+	"12-09",
+	CONCAT(
+		"September 12 is Kotori Minami's birthday!", CHAR(10),
+		"To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10),
+		"as a Login Bonus today."
+	),
+	"assets/image/ui/login_bonus_extra/birthday_5_1.png",
+	3001, NULL, 5
+);
+-- Eli
+INSERT INTO `birthday_login_bonus` VALUES(
+	"21-10",
+	CONCAT(
+		"October 21 is Eli Ayase's birthday!", CHAR(10),
+		"To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10),
+		"as a Login Bonus today."
+	),
+	"assets/image/ui/login_bonus_extra/birthday_6_1.png",
+	3001, NULL, 5
+);
+-- Rin
+INSERT INTO `birthday_login_bonus` VALUES(
+	"01-11",
+	CONCAT(
+		"November 1 is Rin Hoshizora's birthday!", CHAR(10),
+		"To celebrate the occasion, we are giving away 5 Love Gems", CHAR(10),
+		"as a Login Bonus today."
+	),
+	"assets/image/ui/login_bonus_extra/birthday_7_1.png",
+	3001, NULL, 5
+);
 
 -- Insert daily rotation songs
 INSERT INTO `daily_rotation` VALUES (46, 1);	-- Mermaid Festa vol.2 Easy

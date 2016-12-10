@@ -349,6 +349,7 @@ if(npps_config('UNLOCK_ALL_EVENTSCENARIO'))
 
 // Nico event_id is actually 40(a = 24; b = 2); event_id 24 is Hanayo
 // Pseudo event_id is used instead (starts from -1 in Nico to -9 in Hanayo)
+/*
 return [
 	[
 		'event_scenario_list' => [
@@ -419,4 +420,10 @@ return [
 	],
 	200
 ];
+*/
+return [
+	[
+
+	],
+	200];
 ?>
