@@ -11,14 +11,14 @@ function deck_card_in_deck(int $user_id, int $unit_id): int
 {
 	global $DATABASE;
 	
-	$data = $DATABASE->execute_query("SELECT deck_table, main_deck FROM `users` WHERE user_id = $user_id")[0];
+	$data = npps_query("SELECT deck_table, main_deck FROM `users` WHERE user_id = $user_id")[0];
 	
-	foreach($DATABASE->execute_query("SELECT deck_num, deck_members FROM `{$data[0]}`") as $deck)
+	foreach(npps_query("SELECT deck_num, deck_members FROM `{$data['deck_table']}`") as $deck)
 	{
-		foreach(explode(':', $deck[1]) as $member)
+		foreach(explode(':', $deck['deck_members']) as $member)
 		{
 			if($member == $unit_id)
-				return $deck[0] == $data[1] ? 2 : 1;
+				return $deck['deck_num'] == $data['deck_members'] ? 2 : 1;
 		}
 	}
 	
@@ -30,8 +30,8 @@ function deck_alter(int $user_id, int $deck_num, array $unit_list): bool
 {
 	global $DATABASE;
 	
-	$deck_table = $DATABASE->execute_query("SELECT deck_table FROM `users` WHERE user_id = $user_id")[0][0];
-	$current = explode(':', $DATABASE->execute_query("SELECT deck_members FROM `$deck_table` WHERE deck_num = $deck_num")[0][0]);
+	$deck_table = npps_query("SELECT deck_table FROM `users` WHERE user_id = $user_id")[0]['deck_table'];
+	$current = explode(':', npps_query("SELECT deck_members FROM `$deck_table` WHERE deck_num = $deck_num")[0]['deck_members']);
 	
 	foreach($unit_list as $k => $v)
 	{
@@ -39,7 +39,7 @@ function deck_alter(int $user_id, int $deck_num, array $unit_list): bool
 			$current[$k] = $v;
 	}
 	
-	return $DATABASE->execute_query("UPDATE `$deck_table` SET deck_members = ? WHERE deck_num = $deck_num", 's', implode(':', $current));
+	return npps_query("UPDATE `$deck_table` SET deck_members = ? WHERE deck_num = $deck_num", 's', implode(':', $current));
 }
 
 /* Calculate smile, pure, and cool (array in that order) */
