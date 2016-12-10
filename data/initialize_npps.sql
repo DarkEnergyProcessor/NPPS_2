@@ -69,6 +69,7 @@ CREATE TABLE `users` (
 	first_choosen INTEGER NOT NULL DEFAULT 0,				-- The first choosen unit ID in the game.
 	name VARCHAR(10) NOT NULL DEFAULT "Null",				-- Nickname
 	bio VARCHAR(105) NOT NULL DEFAULT "Hello!",				-- About me section.
+	unit_partner INTEGER NOT NULL DEFAULT 0,                          -- Unit Partner
 	invite_code VARCHAR(9),									-- Friend ID
 	last_active INTEGER NOT NULL,							-- Last active in unix timestamp
 	login_count INTEGER NOT NULL DEFAULT 0,					-- Last lbonus/execute execution timestamp
@@ -174,7 +175,7 @@ CREATE TABLE `notice_list` (
 );
 
 CREATE TABLE `live_information` (
-	live_difficulty_id INTEGER PRIMARY KEY,		-- The live ID
+	live_difficulty_id INTEGER,		            -- The live ID
 	user_id INTEGER NOT NULL,					-- The user ID
 	normal_live BOOL NOT NULL DEFAULT 1,		-- Is the live available in Hits? (used to track EX scores)
 	score INTEGER NOT NULL DEFAULT 0,			-- Highest score

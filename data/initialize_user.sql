@@ -1,9 +1,9 @@
 -- This file contain user initialization
 
 CREATE TABLE `friend_$user_id` (
-	from_user_id INTEGER NOT NULL PRIMARY KEY,			-- The friend (request) user ID
-	is_approved INTEGER NOT NULL DEFAULT 0,				-- Is the friend request is approved?
-)
+	friend_user_id INTEGER NOT NULL PRIMARY KEY,		-- The friend (request) user ID
+	is_approved INTEGER NOT NULL DEFAULT 0				-- Is the friend request is approved?
+);
 
 CREATE TABLE `present_$user_id` (
 	incentive_idx INTEGER PRIMARY KEY AUTO_INCREMENT,	-- The item position

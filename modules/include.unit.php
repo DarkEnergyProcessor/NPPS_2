@@ -242,26 +242,27 @@ function unit_add_direct(int $user_id, int $card_id): int
 	$max_bond = 25;
 	
 	{
-		$unit_db = new SQLite3Database('data/unit.db_');
+		$unit_db = new SQLite3DatabaseWrapper('data/unit.db_');
 		
-		$temp = $unit_db->execute_query("SELECT hp_max, unit_level_up_pattern_id, normal_card_id, rank_max_card_id, before_level_max, after_level_max, before_love_max, after_love_max FROM `unit_m` WHERE unit_id = $card_id")[0];
-		$is_promo = $temp[2] == $temp[3];
-		$next_exp = $unit_db->execute_query("SELECT next_exp, hp_diff FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_id = {$temp[1]} LIMIT 1")[0];
-		$max_level = $is_promo ? $temp[5] : $temp[4];
-		$max_hp = $temp[0] - $next_exp[1];
-		$max_bond = $is_promo ? $temp[7] : $temp[6];
+		$temp = $unit_db->query("SELECT hp_max, unit_level_up_pattern_id, normal_card_id, rank_max_card_id, before_level_max, after_level_max, before_love_max, after_love_max FROM `unit_m` WHERE unit_id = $card_id")[0];
+		$is_promo = $temp["normal_card_id"] == $temp["rank_max_card_id"];
+		$next_exp = $unit_db->query("SELECT next_exp, hp_diff FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_id = {$temp["unit_level_up_pattern_id"]} LIMIT 1")[0];
+		$max_level = $is_promo ? $temp["after_level_max"] : $temp["before_level_max"];
+		$max_hp = $temp["hp_max"] - $next_exp["hp_diff"];
+		$max_bond = $is_promo ? $temp["after_love_max"] : $temp["before_love_max"];
+		//$sis_max = TODO; FOR NOW IS 8
 	}
 	
 	$temp = npps_query("SELECT unit_table, album_table FROM `users` WHERE user_id = $user_id")[0];
-	if(npps_query("INSERT INTO `{$temp[0]}` (card_id, next_exp, max_level, health_points, max_bond, added_time) VALUES(?, ?, ?, ?, ?, ?)", 'iiiiii', $card_id, $next_exp[0], $max_level, $max_hp, $max_bond, $UNIX_TIMESTAMP))
+	if(npps_query("INSERT INTO `{$temp["unit_table"]}` (unit_id, next_exp, max_level, max_hp, max_love, insert_date, unit_removable_skill_capacity) VALUES(?, ?, ?, ?, ?, ?, ?)", 'iiiiiii', $card_id, $next_exp["next_exp"], $max_level, $max_hp, $max_bond, $UNIX_TIMESTAMP, 8))
 	{
-		$unit_id = npps_query('SELECT LAST_INSERT_ID()')[0][0];
+		$unit_id = npps_query('SELECT LAST_INSERT_ID()')[0]['last_insert_rowid()'];
 		$flags = 1;
 		
 		if($is_promo)
 			$flags = 2;
 		
-		npps_query("INSERT OR IGNORE INTO `{$temp[1]}` VALUES (?, ?, 0)", 'ii', $card_id, $flags);
+		npps_query("INSERT OR IGNORE INTO `{$temp["album_table"]}` VALUES (?, ?, 0)", 'ii', $card_id, $flags);
 		
 		return $unit_id;
 	}
@@ -284,16 +285,16 @@ function unit_remove(int $user_id, int $unit_own_id): bool
 	)[0];
 	$deck_list = [];
 	
-	foreach(npps_query("SELECT deck_num, deck_members FROM `{$info[1]}`") as $a)
+	foreach(npps_query("SELECT deck_num, deck_members FROM `{$info['deck_table']}`") as $a)
 	{
-		$b = explode(':', $a[1]);
-		$deck_list[$a[0]] = $b;
+		$b = explode(':', $a['deck_members']);
+		$deck_list[$a['deck_num']] = $b;
 		
 		foreach($b as &$unit)
 		{
 			if($unit == $unit_own_id)
 			{
-				if($info[2] == $a[0])
+				if($info['main_deck'] == $a['deck_num'])
 					// In main deck. Cannot remove
 					return false;
 				else
@@ -307,7 +308,7 @@ function unit_remove(int $user_id, int $unit_own_id): bool
 		deck_alter($user_id, $k, $v);
 	
 	// Last: update database
-	npps_query("DELETE FROM `{$info[0]}` WHERE unit_id = $unit_own_id");
+	npps_query("DELETE FROM `{$info['unit_table']}` WHERE unit_id = $unit_own_id");
 	
 	return true;
 }
@@ -330,7 +331,7 @@ function unit_add(int $user_id, int $card_id, array $item_data = []): int
 		return 0;
 	}
 	
-	return card_add_direct($user_id, $card_id);
+	return unit_add_direct($user_id, $card_id);
 }
 
 /// \brief Used to scout member or giving player live show reward
