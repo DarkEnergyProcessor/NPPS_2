@@ -87,13 +87,20 @@ function time_elapsed_string(int $timestamp, bool $full = false): string
 	return $string ? implode(', ', $string) . ' ago' : 'just now';
 }
 
+/// \brief Static class which contain list of database
+class npps_database_list
+{
+	/// Lists of initialized database
+	static public $db_list = [];
+}
+
 /// \brief Get database handle of specificed database.
 /// \param db_name The database name to get it's handle
 /// \returns DatabaseWrapper object.
 /// \sa DatabaseWrapper
 function npps_get_database(string $db_name = ''): DatabaseWrapper
 {
-	static $db_list = [];
+	$db_list = &npps_database_list::$db_list;
 	
 	if(isset($db_list[$db_name]))
 		return $db_list[$db_name];
@@ -284,10 +291,10 @@ final class npps_nested_transaction
 	
 	public function commit_force()
 	{
-		if($nested_count > 0)
+		if($this->nested_count > 0)
 		{
 			npps_query('COMMIT');
-			$nested_count = 0;
+			$this->nested_count = 0;
 		}
 	}
 	

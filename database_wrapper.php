@@ -94,11 +94,14 @@ class MySQLDatabaseWrapper extends DatabaseWrapper
 	function __construct()
 	{
 		$this->db_handle = new mysqli(
-			npps_config('DBWRAPPER_MYSQL_HOSTNAME'), npps_config('DBWRAPPER_MYSQL_USERNAME'), npps_config('DBWRAPPER_MYSQL_PASSWORD'),
-			DBWRAPPER_DBNAME, npps_config('DBWRAPPER_MYSQL_PORT'));
+			npps_config('DBWRAPPER_MYSQL_HOSTNAME'),
+			npps_config('DBWRAPPER_MYSQL_USERNAME'),
+			npps_config('DBWRAPPER_MYSQL_PASSWORD'),
+			npps_config('DBWRAPPER_DBNAME'),
+			npps_config('DBWRAPPER_MYSQL_PORT'));
 		
 		if($this->db_handle->connect_error)
-			throw new Exception('Error ('.$mysqli->connect_errno.') '.$mysqli->connect_error);
+			throw new Exception('Error ('.$this->db_handle->connect_errno.') '.$this->db_handle->connect_error);
 		
 		mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 	}
@@ -284,7 +287,7 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 	public function __construct(string $filename = NULL)
 	{
 		$custom_filename = false;
-		$dbname = DBWRAPPER_DBNAME.'.db';
+		$dbname = DBWRAPPER_DBNAME . '.db';
 		
 		if($filename)
 		{
@@ -352,7 +355,7 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 		
 		if($types != NULL)
 		{
-			if($stmt = $this->db_handle->prepare($query))
+			if(($stmt = $this->db_handle->prepare($query)))
 			{
 				foreach($values as $k => $v)
 				{
@@ -389,7 +392,7 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 					$stmt->bindValue($k + 1, $v, $datatype);
 				}
 				
-				if($result = $stmt->execute())
+				if(($result = $stmt->execute()))
 				{
 					if($result->numColumns())
 					{
@@ -440,6 +443,59 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 		$this->db_handle->close();
 	}
 };
+
+class SecretboxDatabaseWrapper extends SQLite3DatabaseWrapper
+{
+	public function __construct()
+	{
+		$this->db_handle = new SQLite3(
+			'npps_secretbox.db',
+			(SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE)
+		);
+		$this->db_handle->busyTimeout(5000);			// timeout: 5 seconds
+		$this->db_handle->createFunction(
+			'CONCAT',
+			$GLOBALS['common_sqlite3_concat_function']
+		);
+	}
+	
+	public function initialize_environment()
+	{
+		{
+			$result = $this->db_handle->query('
+				SELECT name FROM `sqlite_master`
+				WHERE tbl_name = \'secretbox_initialized\'
+			');
+			$has_result = false;
+			
+			while($row = $result->fetchArray())
+				$has_result = true;
+			
+			if($has_result)
+				return;
+		}
+		
+		fclose(fopen('npps_secretbox.db', 'w'));
+		
+		$this->db_handle->exec('PRAGMA journal_mode=off');
+		$this->query('BEGIN');
+		$this->db_handle->exec(file_get_contents('data/initialize_secretbox.sql'));
+		$this->query('CREATE TABLE `secretbox_initialized` (a, b)');
+		$this->query('COMMIT');
+	}
+	
+	public function __toString(): string
+	{
+		return 'DatabaseWrapper: Secretbox SQLite3';
+	}
+}
+
+// Initialize secretbox DB
+{
+	$temp = new SecretboxDatabaseWrapper();
+	$temp->initialize_environment();
+	npps_database_list::$db_list['secretbox'] = $temp;
+}
 
 if(npps_config('DBWRAPPER_USE_MYSQL'))
 	return new MySQLDatabaseWrapper();
