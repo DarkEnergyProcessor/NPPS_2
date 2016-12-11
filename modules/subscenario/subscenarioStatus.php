@@ -1,7 +1,9 @@
 <?php
-$subscenario = npps_query("SELECT subscenario_tracking FROM `users` WHERE user_id = $USER_ID")[0]["subscenario_tracking"] ?? '';
+$user = npps_user::get_instance($USER_ID);
+$subscenario = $user->subscenario_tracking;
 
-if(strlen($subscenario) == 0)
+if($subscenario === NULL || strlen($subscenario) == 0)
+	// No subscenario
 	return [
 		[
 			'subscenario_status_list' => false
@@ -27,4 +29,3 @@ return [
 	],
 	200
 ];
-?>

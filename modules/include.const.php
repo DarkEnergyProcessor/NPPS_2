@@ -18,6 +18,11 @@ define('NPPS_CAPITAL_TYPE_ENERGY', 1);
 /// Song requires Token
 define('NPPS_CAPITAL_TYPE_TOKEN', 2);
 
+/// Live show is never cleared ("NEW" mark)
+define('NPPS_LIVE_NEW', 1);
+/// Live show already cleared at least once
+define('NPPS_LIVE_EVER_CLEAR', 2);
+
 /// Easy difficulty
 define('NPPS_SONG_DIFFICULTY_EASY', 1);
 /// Normal difficuty

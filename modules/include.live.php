@@ -70,11 +70,11 @@ class npps_live_setting
 		$this->live_setting_id = $live_setting_id;
 		$this->live_track_name = $live_db->query("
 			SELECT name FROM `live_track_m`
-			WHERE live_track_id = {$this->live_track_id}
+			WHERE live_track_id = {$ls_data['live_track_id']}
 		")[0]['name'];
 		$this->difficulty = $ls_data['difficulty'];
 		$this->stage_level = $ls_data['stage_level'];
-		$this->attribute = $ls_data['attribute'];
+		$this->attribute = $ls_data['attribute_icon_id'];
 		$this->notes_speed = $ls_data['notes_speed'];
 		$this->s_score = $ls_data['s_rank_score'];
 		$this->a_score = $ls_data['a_rank_score'];
@@ -274,7 +274,7 @@ class npps_live_difficulty
 		
 		foreach($table as $x)
 		{
-			$live = npps_query("
+			$live = $live_db->query("
 				SELECT
 					live_setting_id, capital_type, capital_value,
 					special_setting, c_rank_complete, b_rank_complete,
@@ -521,7 +521,7 @@ class npps_live_difficulty
 			'challenge' => 'npps_live_difficulty::get_instance_challenge'
 		];
 		
-		if(count($target) == 0)
+		if(strlen($target) == 0)
 		{
 			// Find all
 			foreach($calltarget as $x)
@@ -544,6 +544,74 @@ class npps_live_difficulty
 			throw new Exception("Invalid target $target");
 		
 		throw new Exception("live_difficulty_id $live_difficulty_id not found");
+	}
+	
+	/// \brief Gets list of completed goal reward ID for specificed value
+	/// \param cmplist The list of values to check (In-order: C, B, A, S)
+	/// \param cmpval The value to compare
+	/// \param base Where to start compare in goal reward array
+	/// \returns List of completed goal reward ID with specificed value checked.
+	/// \exception Exception Thrown if live difficulty doesn't have goal reward.
+	protected function goal_reward_base(
+		array $cmplist,
+		int $cmpval,
+		int $base): array
+	{
+		if($this->goal_reward == NULL)
+			throw new Exception('No goal reward data');
+		
+		$cleared_list = [];
+		
+		for($i = 0; $i < 4; $i++)
+		{
+			if($cmplist[$i] >= $cmpval)
+				$cleared_list[] =
+					$this->goal_reward[$i + $base]['live_goal_reward_id'];
+		}
+		
+		return $cleared_list;
+	}
+	
+	/// \brief Get list of completed goal reward ID based from specificed score
+	public function goal_reward_score(int $score): array
+	{
+		return $this->goal_reward_base(
+			[$this->c_score, $this->b_score, $this->a_score, $this->s_score],
+			$score, 0
+		);
+	}
+	
+	/// \brief Get list of completed goal reward ID based from specificed combo
+	public function goal_reward_combo(int $combo): array
+	{
+		$set = $this->live_setting;
+		
+		return $this->goal_reward_base(
+			[$set->c_combo, $set->b_combo, $set->a_combo, $set->s_combo],
+			$combo, 4
+		);
+	}
+	
+	/// \brief Get list of completed goal reward ID based from specificed amount
+	///        of plays
+	public function goal_reward_times(int $times): array
+	{
+		return $this->goal_reward_base(
+			[$this->c_times, $this->b_times, $this->a_times, $this->s_times],
+			$times, 8
+		);
+	}
+	
+	/// \brief Combines npps_live_difficulty::goal_reward_score, 
+	///        npps_live_difficulty::goal_reward_score, and 
+	///        npps_live_difficulty::goal_reward_score
+	public function goal_reward(int $score, int $combo, int $times): array
+	{
+		return array_merge(
+			$this->goal_reward_score($score),
+			$this->goal_reward_combo($combo),
+			$this->goal_reward_times($times)
+		);
 	}
 }
 
@@ -595,8 +663,16 @@ function live_unlock(int $user_id, int $live_difficulty_id): bool
 	if(count($temp_data) == 0)
 	{
 		npps_query("
-			INSERT INTO `live_information` (live_difficulty_id, user_id)
-			VALUES ($live_difficulty_id, $user_id)
+			INSERT INTO `live_information` (
+				live_difficulty_id,
+				user_id,
+				normal_live
+			)
+			VALUES (
+				$live_difficulty_id,
+				$user_id,
+				1
+			)
 		");
 		return true;
 	}
@@ -633,6 +709,36 @@ function live_get_info(int $user_id, int $live_difficulty_id): array
 	return $out;
 }
 
+/// \brief Sets the user live information
+/// \param user_id The player user ID
+/// \param live_difficulty_id The live ID to set it's info
+/// \param score The player score
+/// \param combo The player combo
+/// \param times The player amount of plays
+function live_set_info(
+	int $user_id,
+	int $live_difficulty_id,
+	int $score, int $combo, int $times
+)
+{
+	npps_query("
+		REPLACE INTO `live_information` (
+			user_id,
+			live_difficulty_id,
+			score,
+			combo,
+			times
+		)
+		VALUES (
+			$user_id,
+			$live_difficulty_id,
+			$score,
+			$combo,
+			$times
+		)
+	");
+}
+
 /// \brief Get current daily rotation live IDs
 /// \returns array contains `live_difficulty_id` for today's song rotation
 function live_get_current_daily(): array
@@ -654,7 +760,7 @@ function live_get_current_daily(): array
 			SELECT live_difficulty_id FROM `daily_rotation`
 			WHERE daily_category = $i"
 		);
-		$out[] = $current_rot[$current_days % count($current_rot)][0];
+		$out[] = $current_rot[$current_days % count($current_rot)]['live_difficulty_id'];
 	}
 	
 	return $out;

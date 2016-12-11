@@ -1,9 +1,10 @@
 <?php
-$platform = npps_query("SELECT platform_code FROM `users` WHERE user_id = $USER_ID")[0]["platform_code"];
+$user = npps_user::get_instance($USER_ID);
+$platform = $user->platform_code;
 
-if($platform == NULL)
+if($platform === NULL)
 {
-	/* Not connected */
+	// Not connected
 	return [
 		[
 			'is_connected' => false
@@ -12,11 +13,11 @@ if($platform == NULL)
 	];
 }
 
-$platform = explode(':', $platform);
+$platform = npps_separate(':', $platform);
 
-if($platform[1] != $PLATFORM_CODE)
+if($platform[1] != $PLATFORM_ID)
 {
-	/* Connected but platform code doesn't match */
+	// Connected but platform code doesn't match
 	return [
 		[
 			'is_connected' => false
@@ -25,11 +26,10 @@ if($platform[1] != $PLATFORM_CODE)
 	];
 }
 
-/* Connected */
+// Connected
 return [
 	[
 		'is_connected' => true
 	],
 	200
 ];
-?>

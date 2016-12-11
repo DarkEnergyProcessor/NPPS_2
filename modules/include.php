@@ -427,6 +427,8 @@ function npps_config(string $config_name = '', bool $access_outside = false)
 /// \param USER_ID The player user ID. Should be set to current `$USER_ID`
 ///        variable
 /// \param TOKEN The current token. Should be set to current `$TOKEN` variable
+/// \param PLATFORM_ID The current platform ID. Should be set to current 
+///                    $PLATFORM_ID variable.
 /// \param module_action <module>/<action> to be called
 /// \param request_data The module request_data, if any
 /// \returns Response data in `array` on success, `integer` if request
@@ -434,6 +436,7 @@ function npps_config(string $config_name = '', bool $access_outside = false)
 function npps_call_module(
 	int& $USER_ID,
 	&$TOKEN,
+	int $PLATFORM_ID,
 	string $module_action,
 	array $request_data = []
 )
@@ -445,7 +448,7 @@ function npps_call_module(
 	global $CURRENT_ACTION;
 	
 	$isolator_call = function(string $___FILE, $REQUEST_DATA)
-		use($UNIX_TIMESTAMP, $TEXT_TIMESTAMP, &$TOKEN, &$USER_ID)
+		use($UNIX_TIMESTAMP, $TEXT_TIMESTAMP, &$TOKEN, &$USER_ID, $PLATFORM_ID)
 	{
 		return (include($___FILE));
 	};

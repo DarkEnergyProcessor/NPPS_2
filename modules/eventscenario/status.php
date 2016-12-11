@@ -349,70 +349,87 @@ if(npps_config('UNLOCK_ALL_EVENTSCENARIO'))
 
 // Nico event_id is actually 40(a = 24; b = 2); event_id 24 is Hanayo
 // Pseudo event_id is used instead (starts from -1 in Nico to -9 in Hanayo)
-/*
 return [
 	[
 		'event_scenario_list' => [
 			[
 				'event_id' => -1,
-				'event_scenario_btn_asset' => 'assets/image/ui/eventscenario/40_se_ba_t.png',
-				'event_scenario_se_btn_asset' => 'assets/image/ui/eventscenario/40_se_ba_tse.png',
+				'event_scenario_btn_asset' =>
+					'assets/image/ui/eventscenario/40_se_ba_t.png',
+				'event_scenario_se_btn_asset' =>
+					'assets/image/ui/eventscenario/40_se_ba_tse.png',
 				'open_date' => NULL,
 				'chapter_list' => $nico
 			],
 			[
 				'event_id' => -2,
-				'event_scenario_btn_asset' => 'assets/image/ui/eventscenario/38_se_ba_t.png',
-				'event_scenario_se_btn_asset' => 'assets/image/ui/eventscenario/38_se_ba_tse.png',
+				'event_scenario_btn_asset' =>
+					'assets/image/ui/eventscenario/38_se_ba_t.png',
+				'event_scenario_se_btn_asset' =>
+					'assets/image/ui/eventscenario/38_se_ba_tse.png',
 				'open_date' => NULL,
 				'chapter_list' => $nozomi
 			],
 			[
 				'event_id' => -3,
-				'event_scenario_btn_asset' => 'assets/image/ui/eventscenario/36_se_ba_t.png',
-				'event_scenario_se_btn_asset' => 'assets/image/ui/eventscenario/36_se_ba_tse.png',
+				'event_scenario_btn_asset' =>
+					'assets/image/ui/eventscenario/36_se_ba_t.png',
+				'event_scenario_se_btn_asset' =>
+					'assets/image/ui/eventscenario/36_se_ba_tse.png',
 				'open_date' => NULL,
 				'chapter_list' => $rin
 			],
 			[
 				'event_id' => -4,
-				'event_scenario_btn_asset' => 'assets/image/ui/eventscenario/34_se_ba_t.png',
-				'event_scenario_se_btn_asset' => 'assets/image/ui/eventscenario/34_se_ba_tse.png',
+				'event_scenario_btn_asset' =>
+					'assets/image/ui/eventscenario/34_se_ba_t.png',
+				'event_scenario_se_btn_asset' =>
+					'assets/image/ui/eventscenario/34_se_ba_tse.png',
 				'open_date' => NULL,
 				'chapter_list' => $umi
 			],
 			[
 				'event_id' => -5,
-				'event_scenario_btn_asset' => 'assets/image/ui/eventscenario/32_se_ba_t.png',
-				'event_scenario_se_btn_asset' => 'assets/image/ui/eventscenario/32_se_ba_tse.png',
+				'event_scenario_btn_asset' =>
+					'assets/image/ui/eventscenario/32_se_ba_t.png',
+				'event_scenario_se_btn_asset' =>
+					'assets/image/ui/eventscenario/32_se_ba_tse.png',
 				'open_date' => NULL,
 				'chapter_list' => $maki
 			],
 			[
 				'event_id' => -6,
-				'event_scenario_btn_asset' => 'assets/image/ui/eventscenario/30_se_ba_t.png',
-				'event_scenario_se_btn_asset' => 'assets/image/ui/eventscenario/30_se_ba_tse.png',
+				'event_scenario_btn_asset' =>
+					'assets/image/ui/eventscenario/30_se_ba_t.png',
+				'event_scenario_se_btn_asset' =>
+					'assets/image/ui/eventscenario/30_se_ba_tse.png',
 				'open_date' => NULL,
 				'chapter_list' => $kotori
 			],
 			[
 				'event_id' => -7,
-				'event_scenario_btn_asset' => 'assets/image/ui/eventscenario/28_se_ba_t.png',
-				'event_scenario_se_btn_asset' => 'assets/image/ui/eventscenario/28_se_ba_tse.png',
+				'event_scenario_btn_asset' =>
+					'assets/image/ui/eventscenario/28_se_ba_t.png',
+				'event_scenario_se_btn_asset' =>
+					'assets/image/ui/eventscenario/28_se_ba_tse.png',
 				'open_date' => NULL,
 				'chapter_list' => $eli
 			],
 			[
 				'event_id' => -8,
-				'event_scenario_btn_asset' => 'assets/image/ui/eventscenario/26_se_ba_t.png',
-				'event_scenario_se_btn_asset' => 'assets/image/ui/eventscenario/26_se_ba_tse.png',
+				'event_scenario_btn_asset' =>
+					'assets/image/ui/eventscenario/26_se_ba_t.png',
+				'event_scenario_se_btn_asset' =>
+					'assets/image/ui/eventscenario/26_se_ba_tse.png',
 				'open_date' => NULL,
 				'chapter_list' => $honoka
 			],
 			[
 				'event_id' => -9,
-				'event_scenario_btn_asset' => 'assets/image/ui/eventscenario/24_se_ba_t.png',
-				'event_scenario_se_btn_asset' => 'assets/image/ui/eventscenario/24_se_ba_tse.png',
+				'event_scenario_btn_asset' =>
+					'assets/image/ui/eventscenario/24_se_ba_t.png',
+				'event_scenario_se_btn_asset' =>
+					'assets/image/ui/eventscenario/24_se_ba_tse.png',
 				'open_date' => NULL,
 				'chapter_list' => $hanayo
 			]
@@ -420,10 +437,4 @@ return [
 	],
 	200
 ];
-*/
-return [
-	[
 
-	],
-	200];
-?>

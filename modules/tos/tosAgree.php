@@ -7,4 +7,4 @@ if(isset($REQUEST_DATA['tos_id']) && is_int($REQUEST_DATA['tos_id']))
 }
 
 echo 'tos_id is invalid';
-return false;
+return ERROR_CODE_OUT_OF_RANG;

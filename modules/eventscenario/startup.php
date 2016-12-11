@@ -2,7 +2,7 @@
 if(!npps_config('UNLOCK_ALL_EVENTSCENARIO'))
 {
 	echo 'Unlock all eventscenario is not enabled in this server!';
-	return false;
+	return ERROR_CODE_SUBSCENARIO_NOT_AVAILABLE;
 }
 
 $event_scenario_id = intval($REQUEST_DATA['event_scenario_id'] ?? 0);
@@ -23,4 +23,3 @@ return [
 	],
 	200
 ];
-?>

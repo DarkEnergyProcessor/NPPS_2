@@ -1,280 +1,129 @@
 <?php
+$live_db = npps_get_database('live');
+$event_common_db = npps_get_database('event/event_common');
+$marathon_db = npps_get_database('event/marathon');
 
-$data = '{
-    "event_list": [],
-    "live_list": [
-        {
-            "live_difficulty_id": 1319,
-            "start_date": "2016-10-16 00:00:00",
-            "end_date": "2016-12-15 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1324,
-            "start_date": "2016-10-21 00:00:00",
-            "end_date": "2016-12-20 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1339,
-            "start_date": "2016-11-01 00:00:00",
-            "end_date": "2016-12-31 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1344,
-            "start_date": "2016-11-06 00:00:00",
-            "end_date": "2017-01-05 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1345,
-            "start_date": "2016-11-16 00:00:00",
-            "end_date": "2017-01-15 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1354,
-            "start_date": "2016-11-21 00:00:00",
-            "end_date": "2017-01-20 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1355,
-            "start_date": "2016-12-01 00:00:00",
-            "end_date": "2017-01-31 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1398,
-            "start_date": "2016-12-06 00:00:00",
-            "end_date": "2017-02-05 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1425000,
-            "start_date": "2016-12-01 00:00:00",
-            "end_date": "2016-12-31 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1426000,
-            "start_date": "2016-12-01 00:00:00",
-            "end_date": "2016-12-31 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1427000,
-            "start_date": "2016-12-01 00:00:00",
-            "end_date": "2016-12-31 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 1428000,
-            "start_date": "2016-12-01 00:00:00",
-            "end_date": "2016-12-31 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 70000,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-15 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 80000,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-15 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 90000,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-15 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 75000,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-15 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 49,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-09 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 46,
-            "start_date": "2016-12-08 00:00:00",
-            "end_date": "2016-12-08 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 50,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-09 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 47,
-            "start_date": "2016-12-08 00:00:00",
-            "end_date": "2016-12-08 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 51,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-09 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 48,
-            "start_date": "2016-12-08 00:00:00",
-            "end_date": "2016-12-08 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 446,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-09 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 458,
-            "start_date": "2016-12-08 00:00:00",
-            "end_date": "2016-12-08 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 440,
-            "start_date": "2016-12-08 00:00:00",
-            "end_date": "2016-12-08 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 443,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-09 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 441,
-            "start_date": "2016-12-08 00:00:00",
-            "end_date": "2016-12-08 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 444,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-09 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 442,
-            "start_date": "2016-12-08 00:00:00",
-            "end_date": "2016-12-08 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 445,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-09 23:59:59",
-            "is_random": false,
-            "dangerous": false,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 566,
-            "start_date": "2016-12-08 00:00:00",
-            "end_date": "2016-12-08 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        },
-        {
-            "live_difficulty_id": 567,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-09 23:59:59",
-            "is_random": false,
-            "dangerous": true,
-            "use_quad_point": false
-        }
-    ],
-    "limited_bonus_list": [],
-    "random_live_list": [
-        {
-            "attribute_id": 1,
-            "start_date": "2016-12-09 00:00:00",
-            "end_date": "2016-12-09 23:59:59"
-        },
-        {
-            "attribute_id": 3,
-            "start_date": "2016-12-08 00:00:00",
-            "end_date": "2016-12-08 23:59:59"
-        }
-    ]
-}';
+$event_list = [];
+$live_time = [];
+$rlive_list = [];
 
-$array_data = json_decode($data, true);
+// Get event list
+foreach(npps_query("
+	SELECT * FROM `event_list`
+	WHERE
+		start_time <= $UNIX_TIMESTAMP AND
+		close_time > $UNIX_TIMESTAMP
+	") as $ev
+)
+{
+	$event_info = $event_common_db->query("
+		SELECT
+			event_category_id,
+			name,
+			banner_asset_name,
+			banner_se_asset_name,
+			result_banner_asset_name
+		FROM `event_m`
+		WHERE
+			event_id = {$ev['event_id']}
+	");
+	
+	// If there's no event found with specificed event ID, skip
+	if(count($event_info) == 0)
+	{
+		echo "event_id {$ev['event_id']} not found in database";
+		continue;
+	}
+	else
+		$event_info = $event_info[0];
+	
+	$event_list[] = [
+		'event_id' => $ev['event_id'],
+		'event_category_id' => $event_info['event_category_id'],
+		'name' => $event_info['name'],
+		'open_date' => to_utcdatetime($ev['event_start']),
+		'start_date' => to_utcdatetime($ev['event_start'] + 1),
+		'end_date' => to_utcdatetime($ev['event_end']),
+		'close_date' => to_utcdatetime($ev['event_close']),
+		'banner_asset_name' => $event_info['banner_asset_name'],
+		'banner_se_asset_name' => $event_info['banner_se_asset_name'],
+		'result_banner_asset_name' => $event_info['result_banner_asset_name'],
+		'description' => 'nil'
+	];
+	
+	if($ev['token_image'] != NULL)
+	{
+		// Token event, get it's live list
+		foreach(['easy_song_list','normal_song_list','hard_song_list','expert_song_list'] as $i)
+			if($ev[$i] && strlen($ev[$i]) > 0)
+				foreach(npps_separate(',', $ev[$i]) as $live_id)
+				{
+					$lobj = npps_live_difficulty::get_instance($live_id);
+					$live_time[] = [
+						'live_difficulty_id' => ($live_id),
+						'start_date' => to_utcdatetime($ev['event_start']),
+						'end_date' => to_utcdatetime($ev['event_end']),
+						'is_random' => $lobj->random_flag,
+						'dangerous' => $lobj->stage_level >= 11,
+						'use_quad_point' => $lobj->special_setting
+					];
+				}
+	}
+}
 
-return [$array_data,200];
+// B-side songs
+foreach(npps_query("
+	SELECT * FROM `b_side_schedule`
+	WHERE
+		end_available_time > $UNIX_TIMESTAMP AND
+		start_available_time < $UNIX_TIMESTAMP
+") as $v)
+{
+	$lobj = npps_live_difficulty::get_instance($v['live_difficulty_id']);
+	
+	$live_time[] = [
+		'live_difficulty_id' => intval($v['live_difficulty_id']),
+		'start_date' => to_utcdatetime($v['start_available_time']),
+		'end_date' => to_utcdatetime($v['end_available_time']),
+		'is_random' => $lobj->random_flag,
+		'dangerous' => $lobj->stage_level >= 11,
+		'use_quad_points' => $lobj->special_setting
+	];
+}
+
+// Daily rotation
+$today_midnight = $UNIX_TIMESTAMP - ($UNIX_TIMESTAMP % 86400);
+foreach(live_get_current_daily() as $live_id)
+{
+	$lobj = npps_live_difficulty::get_instance($live_id);
+	
+	$live_time[] = [
+		'live_difficulty_id' => $live_id,
+		'start_date' => to_utcdatetime($today_midnight),
+		'end_date' => to_utcdatetime($today_midnight + 86399),
+		'is_random' => $lobj->random_flag,
+		'dangerous' => $lobj->stage_level >= 11,
+		'use_quad_points' => $lobj->special_setting
+	];
+}
+
+// Random live
+$user = npps_user::get_instance($USER_ID);
+$rlive_attr = (intdiv($today_midnight, 86400) % 3) + 1;
+foreach(['muse_random_live_lock', 'aqua_random_live_lock'] as $t)
+	if($user->$t)
+		$rlive_list[] = [
+			'attribute_id' => $rlive_attr,
+			'start_date' => to_utcdatetime ($today_midnight),
+			'end_date' => to_utcdatetime ($today_midnight + 86399)
+		];
+
+return [
+	[
+		'event_list' => $event_list,
+		'live_list' => $live_time,
+		'limited_bonus_list' => [],
+		'random_live_list' => $rlive_list
+	],
+	200
+];

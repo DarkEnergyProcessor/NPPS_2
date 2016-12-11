@@ -100,7 +100,7 @@ CREATE TABLE `users` (
 	gold_sticker INTEGER NOT NULL DEFAULT 0,				-- SSR stickers
 	purple_sticker INTEGER NOT NULL DEFAULT 0,				-- UR stickers
 	tutorial_state INTEGER NOT NULL DEFAULT 0,				-- The tutorial state.
-	latest_scenario DECIMAL(8,4) NOT NULL DEFAULT 3.3000,	-- Last unlocked scenario (integral part). The fraction part is scenario ID that haven't viewed.
+	scenario_tracking TEXT DEFAULT NULL,					-- Unlocked scenario ID list, comma separated.
 	subscenario_tracking TEXT DEFAULT NULL,					-- Unlocked subscenario ID list. Add '!' to indicate it's already viewed. Comma separated (defaults to empty string)
 	unlocked_title TEXT NOT NULL,							-- Unlocked badge. Comma separated
 	unlocked_background TEXT NOT NULL,						-- Unlocked background. Comma separated
@@ -177,10 +177,11 @@ CREATE TABLE `notice_list` (
 CREATE TABLE `live_information` (
 	live_difficulty_id INTEGER,		            -- The live ID
 	user_id INTEGER NOT NULL,					-- The user ID
-	normal_live BOOL NOT NULL DEFAULT 1,		-- Is the live available in Hits? (used to track EX scores)
+	normal_live BOOL NOT NULL DEFAULT 0,		-- Is the live available in Hits? (used to track EX scores)
 	score INTEGER NOT NULL DEFAULT 0,			-- Highest score
 	combo INTEGER NOT NULL DEFAULT 0,			-- Highest combo
-	times INTEGER NOT NULL DEFAULT 0			-- x times played
+	times INTEGER NOT NULL DEFAULT 0,			-- x times played
+	PRIMARY KEY(live_difficulty_id, user_id)
 );
 
 CREATE TABLE `personal_notice` (

@@ -1,10 +1,8 @@
 <?php
 
-$album_table = npps_query("SELECT album_table FROM `users` WHERE user_id = $USER_ID")[0]["album_table"];
+$album_table = npps_user::get_instance($USER_ID)->album_table;
 $album_out = [];
 
-//var_dump(npps_query("SELECT * FROM `$album_table`"));
-//die();
 foreach(npps_query("SELECT * FROM `$album_table`") as $album)
 {
 	$flags = $album['flags'];
@@ -23,4 +21,3 @@ return [
 	$album_out,
 	200
 ];
-//return[[],200];

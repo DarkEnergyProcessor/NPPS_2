@@ -53,6 +53,7 @@ final class npps_user
 		'gold_sticker' => ['is_integer', 'i'],
 		'purple_sticker' => ['is_integer', 'i'],
 		'tutorial_state' => ['is_integer', 'i'],
+		'latest_scenario' => ['is_float', 'd'],
 		'friend_table' => [],
 		'present_table' => [],
 		'achievement_table' => [],

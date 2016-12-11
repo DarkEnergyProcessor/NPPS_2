@@ -1,16 +1,20 @@
 <?php
 $unit_initial_id = intval($REQUEST_DATA['unit_initial_set_id'] ?? 0);
 
-/*
-if($unit_initial_id <= 0 || $unit_initial_id > 9)
+if(
+	($unit_initial_id < 49 || $unit_initial_id > 57) ||
+	($unit_initial_id < 788 || $unit_initial_id > 796)
+)
 {
 	echo 'Invalid unit initial ID!';
-	return false;
+	return ERROR_CODE_OUT_OF_RANG;
 }
-*/
 
-$unit_deck = [13, 9, 8, 23, $unit_initial_id + 48, 24, 21, 20, 19];
+$user = npps_user::get_instance($USER_ID);
+$unit_deck = [13, 9, 8, 23, $unit_initial_id, 24, 21, 20, 19];
 $unit_own_ids = [];
+
+npps_begin_transaction();
 
 foreach($unit_deck as $i)
 {
@@ -25,20 +29,22 @@ foreach($unit_deck as $i)
 if(count($unit_own_ids) != 9)
 {
 	echo 'Failed to add some cards!';
-	http_response_code(500);
+	npps_http_code(500);
+	npps_end_transaction();
 	return false;
 }
 
-npps_query('UPDATE `users` SET first_choosen = ? WHERE user_id = ?', 'ii', $unit_initial_id, $USER_ID);
+$user->first_choosen = $unit_initial_id;
 
 if(!deck_alter($USER_ID, 1, $unit_own_ids))
 {
 	echo 'Failed to set deck';
 	http_response_code(500);
+	npps_end_transaction();
 	return false;
 }
 
-user_set_last_active($USER_ID, $TOKEN);
+npps_end_transaction();
 
 return [
 	[
@@ -46,4 +52,3 @@ return [
 	],
 	200
 ];
-?>

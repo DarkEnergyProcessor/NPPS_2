@@ -15,7 +15,10 @@ if(!defined('MAIN_INVOKED')) exit;
 function common_initialize_environment(DatabaseWrapper $db, $direct_db = NULL)
 {
 	npps_begin_transaction();
-	if(npps_file_query('data/initialize_npps.sql') && npps_file_query('data/initialize_daily_login_bonus.sql'))
+	if(
+		npps_file_query('data/initialize_npps.sql') &&
+		npps_file_query('data/initialize_daily_login_bonus.sql')
+	)
 	{
 		npps_end_transaction();
 		
@@ -61,7 +64,7 @@ abstract class DatabaseWrapper
 			$order = $order[0];
 		
 		if(count($order) == 0)
-			return "";
+			return '';
 		
 		$out = ["ORDER BY CASE `$field_name`"];
 		$max_len = count($order);
@@ -121,14 +124,26 @@ class MySQLDatabaseWrapper extends DatabaseWrapper
 	
 	public function query(string $query, string $types = NULL, ...$values)
 	{
-		$query = str_ireplace('INSERT OR IGNORE', 'INSERT IGNORE', preg_replace('/\?\d*/', "?", str_ireplace("RANDOM", "RAND", $query)));
+		$query = str_ireplace(
+			'INSERT OR IGNORE',
+			'INSERT IGNORE',
+			preg_replace(
+				'/\?\d*/',
+				'?',
+				str_ireplace(
+					'RANDOM',
+					'RAND',
+					$query
+				)
+			)
+		);
 		
 		if(isset($values[0]) && is_array($values[0]))
 			$values = $values[0];
 		
 		if($types != NULL)
 		{
-			if($stmt = $this->db_handle->prepare($query))
+			if(($stmt = $this->db_handle->prepare($query)))
 			{
 				$stmt->bind_param($types, ...$values);
 				
@@ -169,7 +184,7 @@ class MySQLDatabaseWrapper extends DatabaseWrapper
 				return false;
 			}
 			
-			if($result = $this->db_handle->use_result())
+			if(($result = $this->db_handle->use_result()))
 			{
 				$fields = $result->fetch_fields();
 				$result_array = $result->fetch_all(MYSQLI_ASSOC);
@@ -312,7 +327,11 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 			if($this->db_handle->version()['versionNumber'] < 3007000)
 				throw new Exception('SQLite3 database wrapper requires SQLite v3.7.0 or later!');
 			else
-				$this->db_handle->exec("PRAGMA journal_mode=WAL");	// journal mode: WAL; production environment only
+				// Journal mode: WAL; production environment only
+				$this->db_handle->exec("PRAGMA journal_mode=WAL");
+		else
+			// Journal mode: memory; debug environment only
+			$this->db_handle->exec('PRAGMA journal_mode=memory');
 		
 		common_initialize_environment($this);
 		
