@@ -3,12 +3,12 @@ $award_id = intval($REQUEST_DATA['award_id'] ?? 0);
 
 if($award_id > 0)
 {
-	$award_list = explode(",", npps_query("SELECT unlocked_badge FROM `users` WHERE user_id = $USER_ID")[0][0]);
+	$user = npps_user::get_instance($USER_ID);
+	$award_list = npps_separate(',', $user->unlocked_title);
 	
 	if(array_search(strval($award_id), $award_list) !== false)
 	{
-		npps_query("UPDATE `users` SET badge_id = $award_id WHERE user_id = $USER_ID");
-		user_set_last_active($USER_ID, $TOKEN);
+		$user->title_id = $award_id;
 		
 		return [
 			[],
@@ -17,5 +17,5 @@ if($award_id > 0)
 	}
 }
 
-echo "Invalid award ID";
-return false;
+echo 'Invalid award ID';
+return ERROR_CODE_OUT_OF_RANG;

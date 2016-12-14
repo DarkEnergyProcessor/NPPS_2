@@ -262,20 +262,8 @@ function npps_main_script_handler(
 	}
 	else
 	{
-<<<<<<< HEAD
-		$cred = npps_query('
-			SELECT login_key, login_pwd FROM `logged_in` WHERE token = ?',
-			's', $TOKEN
-		)[0];
-		$connected_uid = user_id_from_credentials(
-			$cred['login_key'],
-			$cred['login_pwd'],
-			$TOKEN
-		);
-=======
 		$cred = npps_query('SELECT login_key, login_pwd FROM `logged_in` WHERE token = ?', 's', $TOKEN)[0];
 		$connected_uid = user_id_from_credentials($cred['login_key'], $cred['login_pwd'], $TOKEN);
->>>>>>> fb8e2ef87786150db5ba7d914e7aec95098d85fd
 		
 		if($connected_uid == 0)
 			goto invalid_credentials;
