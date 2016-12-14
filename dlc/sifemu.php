@@ -10,7 +10,6 @@ class SifEmu
 {
 	/* Change these variables if necessary */
 	protected static $SERVER_ADDRESS = "http://prod.en-lovelive.klabgames.net/main.php/";
-	protected static $APPLICATION_ID = "834030294";
 	protected static $XMESSAGECODE = X_MESSAGE_CODE_KEY;
 	protected static $USERNAME = "";
 	protected static $PASSWORD = "";
@@ -103,14 +102,8 @@ class SifEmu
 			'Expect:',
 			'API-Model: straightforward',
 			'Debug: 1',
-			'Bundle-Version: 4.0.2',
 			'Client-Version: '.self::$CLIENT_VERSION,
-			'OS-Version: libcURL with PHP '.PHP_VERSION,
-			'OS: Android',
-			'Platform-Type: 2',
-			'Application-ID: '.self::$APPLICATION_ID,
-			'Time-Zone: '.date_default_timezone_get(),
-			'Region: 392'
+			'Platform-Type: 2'
 		];
 	}
 	
