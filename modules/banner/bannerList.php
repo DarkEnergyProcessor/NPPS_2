@@ -2,6 +2,7 @@
 $banner_list = [];
 $event_common_db = npps_get_database('event/event_common');
 
+// Events
 foreach(npps_query("
 	SELECT event_id, end_time FROM `event_list`
 	WHERE end_time > $UNIX_TIMESTAMP AND start_time <= $UNIX_TIMESTAMP")
@@ -13,7 +14,7 @@ foreach(npps_query("
 		WHERE event_id = {$event['event_id']}"
 	)[0];
 	$banner_list[] = [
-		'banner_type' => 0,
+		'banner_type' => NPPS_BANNER_EVENT,
 		'target_id' => $event['event_id'],
 		'asset_path' => $event_info['banner_asset_name'],
 		'asset_path_se' => $event_info['banner_se_asset_name'],
@@ -21,20 +22,39 @@ foreach(npps_query("
 	];
 }
 
-
-$secretbox_json = file_get_contents("data/secretbox.json");
-$secretbox_array = json_decode($secretbox_json, true);
-$list[] = $secretbox_array[0]["normal_secretbox"];
+$secretbox_array = json_decode(file_get_contents('data/secretbox.json'), true);
+$muse_secretbox = $secretbox_array[0]['normal_secretbox'];
 $id = 0;
 
-foreach($list as $secretbox){
-        $banner_list[] = [
-		'banner_type' => 1,
-		'target_id' => $id,
-		'asset_path' => $secretbox["banner_image"],
-		'asset_path_se' => $secretbox["banner_image_selected"],
-	];
-    $id++;
+// Muse secretbox
+$banner_list[] = [
+	'banner_type' => NPPS_BANNER_SECRETBOX,
+	'target_id' => -1,
+	'asset_path' => $muse_secretbox['banner_image'],
+	'asset_path_se' => $muse_secretbox['banner_image_selected'],
+];
+
+// Aqua secretbox, TODO
+
+// Enum secretbox DB
+$secretbox_db = npps_get_database('secretbox');
+
+foreach(['muse_secretbox', 'aqua_secretbox'] as $i => $box)
+{
+	$abox = $secretbox_db->query("
+		SELECT secretbox_id, banner, banner_se FROM `$box`
+		WHERE
+			$UNIX_TIMESTAMP >= start_time AND
+			$UNIX_TIMESTAMP < end_time
+	");
+	
+	foreach($abox as $x)
+		$banner_list[] = [
+			'banner_type' => NPPS_BANNER_SECRETBOX,
+			'target_id' => $x['secretbox_id'] | (16777216 << $i),
+			'asset_path' => $x['banner'],
+			'asset_path_se' => $x['banner_se']
+		];
 }
 
 return [

@@ -1,7 +1,7 @@
 <?php
 $unitlist_template = [13, 9, 8, 23, -1, 24, 21, 20, 19];
 
-$make_initial_set = function(int $min, int $max): array use($unitlist_template)
+$make_initial_set = function(int $min, int $max) use($unitlist_template): array
 {
 	$initial_set = [];
 	

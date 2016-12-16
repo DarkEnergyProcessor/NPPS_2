@@ -353,7 +353,7 @@ return [
 	[
 		'event_scenario_list' => [
 			[
-				'event_id' => -1,
+				'event_id' => 40,
 				'event_scenario_btn_asset' =>
 					'assets/image/ui/eventscenario/40_se_ba_t.png',
 				'event_scenario_se_btn_asset' =>
@@ -362,7 +362,7 @@ return [
 				'chapter_list' => $nico
 			],
 			[
-				'event_id' => -2,
+				'event_id' => 38,
 				'event_scenario_btn_asset' =>
 					'assets/image/ui/eventscenario/38_se_ba_t.png',
 				'event_scenario_se_btn_asset' =>
@@ -371,7 +371,7 @@ return [
 				'chapter_list' => $nozomi
 			],
 			[
-				'event_id' => -3,
+				'event_id' => 36,
 				'event_scenario_btn_asset' =>
 					'assets/image/ui/eventscenario/36_se_ba_t.png',
 				'event_scenario_se_btn_asset' =>
@@ -380,7 +380,7 @@ return [
 				'chapter_list' => $rin
 			],
 			[
-				'event_id' => -4,
+				'event_id' => 34,
 				'event_scenario_btn_asset' =>
 					'assets/image/ui/eventscenario/34_se_ba_t.png',
 				'event_scenario_se_btn_asset' =>
@@ -389,7 +389,7 @@ return [
 				'chapter_list' => $umi
 			],
 			[
-				'event_id' => -5,
+				'event_id' => 32,
 				'event_scenario_btn_asset' =>
 					'assets/image/ui/eventscenario/32_se_ba_t.png',
 				'event_scenario_se_btn_asset' =>
@@ -398,7 +398,7 @@ return [
 				'chapter_list' => $maki
 			],
 			[
-				'event_id' => -6,
+				'event_id' => 30,
 				'event_scenario_btn_asset' =>
 					'assets/image/ui/eventscenario/30_se_ba_t.png',
 				'event_scenario_se_btn_asset' =>
@@ -407,7 +407,7 @@ return [
 				'chapter_list' => $kotori
 			],
 			[
-				'event_id' => -7,
+				'event_id' => 28,
 				'event_scenario_btn_asset' =>
 					'assets/image/ui/eventscenario/28_se_ba_t.png',
 				'event_scenario_se_btn_asset' =>
@@ -416,7 +416,7 @@ return [
 				'chapter_list' => $eli
 			],
 			[
-				'event_id' => -8,
+				'event_id' => 26,
 				'event_scenario_btn_asset' =>
 					'assets/image/ui/eventscenario/26_se_ba_t.png',
 				'event_scenario_se_btn_asset' =>
@@ -425,7 +425,7 @@ return [
 				'chapter_list' => $honoka
 			],
 			[
-				'event_id' => -9,
+				'event_id' => 24,
 				'event_scenario_btn_asset' =>
 					'assets/image/ui/eventscenario/24_se_ba_t.png',
 				'event_scenario_se_btn_asset' =>

@@ -10,7 +10,7 @@ $array_stickers [] = ['rarity' => 5,'exchange_point' => $user->gold_sticker];
 
 return [
 	[
-		'exchange_point_list' => [$array_stickers]
+		'exchange_point_list' => $array_stickers
 	],
 	200
 ];

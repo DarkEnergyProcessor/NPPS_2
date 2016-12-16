@@ -1,5 +1,4 @@
 <?php
-
 $album_table = npps_user::get_instance($USER_ID)->album_table;
 $album_out = [];
 

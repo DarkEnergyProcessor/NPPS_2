@@ -88,7 +88,7 @@ final class npps_unit_tempinfo
 			'SELECT * FROM `unit_level_up_pattern_m` WHERE
 				unit_level_up_pattern_id = ?',
 			'i', $unit_info['unit_level_up_pattern_id']
-		)[0];
+		);
 		$new_levelup_pattern = [];	// Index is unit level, starts at 1
 		$temp_exp_needed = 0;
 		
@@ -105,8 +105,9 @@ final class npps_unit_tempinfo
 				'pure_diff' => $v['pure_diff'],
 				'cool' => $unit_info['cool_max'] - $v['cool_diff'],
 				'cool_diff' => $v['cool_diff'],
-				'rank_up_cost' => $v['rank_up_cost'],
-				'exchange_point_rank_up_cost' => $v['exchange_point_rank_up_cost']
+				'merge_exp' => $v['merge_exp'],
+				'merge_cost' => $v['merge_cost'],
+				'sale_price' => $v['sale_price']
 			];
 			$temp_exp_needed += $v['next_exp'];
 		}
@@ -159,10 +160,7 @@ class npps_user_unit
 	/// \exception Exception Thrown if unit_owning_user_id is invalid.
 	public function __construct(int $user_id, int $unit_owning_user_id)
 	{
-		$this->unit_table = npps_query("
-			SELECT unit_table FROM `users`
-			WHERE user_id = $user_id
-		")[0];
+		$this->unit_table = npps_user::get_instance($user_id)->unit_table;
 		
 		if(strlen($this->unit_table) == 0)
 			throw Exception("User ID $user_id is not fully initialized");
@@ -209,6 +207,29 @@ class npps_user_unit
 		
 		throw Exception("Property $name can't be set or doesn't exist");
 	}
+	
+	/// \brief Sets protected property/field
+	/// \param name The field name
+	/// \param val The value
+	/// \param type The value SQL datatype char (`i` for integer for example)
+	/// \returns `val`
+	/// \exception Exception Thrown if specificed property doesn't exist
+	protected function set_protected(string $name, $val, string $type)
+	{
+		if(isset(npps_user_unit::$changeable[$name]))
+		{
+			// Update value in this class and database
+			$this->unit_data[$name] = $val;
+			npps_query("
+				UPDATE `{$this->unit_table}` SET $name = ?
+				WHERE unit_owning_user_id = {$this->unit_owning_user_id}
+			", $type, $val);
+			
+			return $val;
+		}
+		
+		throw new Exception("Property $name doesn't exist");
+	}
 };
 
 /// \brief Get full unit information from the database
@@ -223,46 +244,108 @@ class npps_user_unit
 ///              - cool = unit cool stats displayed in-game
 function unit_database_get_info(int $unit_id)
 {
-	return npps_unit_tempinfo::instance()->getinfo($unit_id);
+	return npps_unit_tempinfo::instance()->getunit($unit_id);
 }
 
-/// \brief Add unit to current player memerlist **without checking if player
-///        memberlist is full**.
+/// \brief Alias of unit_add()
 /// \param user_id Player User ID
 /// \param card_id The unit ID to add.
-/// \returns `unit_owning_user_id` or 0 on failure.
-function unit_add_direct(int $user_id, int $card_id): int
+/// \returns `unit_owning_user_id` or 0 on failure (like memberlist is full).
+/// \deprecated use unit_add() instead
+function unit_add_direct(int $user_id, int $unit_id): int
 {
-	global $DATABASE;
+	echo 'Deprecated function used: unit_add_direct';
+	error_log('Deprecated function used: unit_add_direct', 4);
+	
+	return unit_add($user_id, $unit_id);
+}
+
+/// \brief Add unit to current player memerlist. If it's supporting members,
+///        then this function **always** add member specificed.
+/// \param user_id Player User ID
+/// \param card_id The unit ID to add.
+/// \returns `unit_owning_user_id` on success, -1 on success (but it's support
+///          unit), or 0 on failure (like memberlist is full).
+function unit_add(int $user_id, int $card_id): int
+{
 	global $UNIX_TIMESTAMP;
 	
+	$user = npps_user::get_instance($user_id);
+	$unit_data = unit_database_get_info($card_id);
+	$is_promo = false;
 	$next_exp = NULL;
 	$max_level = 1;
 	$max_hp = 1;
 	$max_bond = 25;
 	
 	{
-		$unit_db = new SQLite3DatabaseWrapper('data/unit.db_');
-		
-		$temp = $unit_db->query("SELECT hp_max, unit_level_up_pattern_id, normal_card_id, rank_max_card_id, before_level_max, after_level_max, before_love_max, after_love_max FROM `unit_m` WHERE unit_id = $card_id")[0];
-		$is_promo = $temp["normal_card_id"] == $temp["rank_max_card_id"];
-		$next_exp = $unit_db->query("SELECT next_exp, hp_diff FROM `unit_level_up_pattern_m` WHERE unit_level_up_pattern_id = {$temp["unit_level_up_pattern_id"]} LIMIT 1")[0];
-		$max_level = $is_promo ? $temp["after_level_max"] : $temp["before_level_max"];
-		$max_hp = $temp["hp_max"] - $next_exp["hp_diff"];
-		$max_bond = $is_promo ? $temp["after_love_max"] : $temp["before_love_max"];
-		//$sis_max = TODO; FOR NOW IS 8
+		$is_promo = $unit_data['default_removable_skill_capacity'] ==
+			$unit_data['max_removable_skill_capacity'];
+		$next_exp = $unit_data['unit_level_up_pattern'][1]['next_exp'];
+		$max_level = $is_promo ?
+			$unit_data['after_level_max'] : $unit_data['before_level_max'];
+		$max_hp = $unit_data['unit_level_up_pattern'][1]['hp'];
+		$max_bond = $is_promo ? $unit_data['after_love_max'] :
+			$unit_data['before_love_max'];
 	}
 	
-	$temp = npps_query("SELECT unit_table, album_table FROM `users` WHERE user_id = $user_id")[0];
-	if(npps_query("INSERT INTO `{$temp["unit_table"]}` (unit_id, next_exp, max_level, max_hp, max_love, insert_date, unit_removable_skill_capacity) VALUES(?, ?, ?, ?, ?, ?, ?)", 'iiiiiii', $card_id, $next_exp["next_exp"], $max_level, $max_hp, $max_bond, $UNIX_TIMESTAMP, 8))
+	if($unit_data['disable_rank_up'])
 	{
-		$unit_id = npps_query('SELECT LAST_INSERT_ID()')[0]['last_insert_rowid()'];
+		// Support unit
+		$temp_data = npps_query("
+			SELECT amount FROM `{$user->unit_support_table}`
+			WHERE unit_id = $card_id
+		");
+		$amount = 1;
+		
+		if(count($temp_data) > 0)
+			$amount = $temp_data[0]['amount'] + 1;
+		
+		npps_query("
+			REPLACE INTO `{$user->unit_support_table}`
+			VALUES($card_id, $amount)
+		");
+		npps_query("
+			REPLACE INTO `{$user->album_table}`
+			VALUES ($card_id, 31, 0)
+		");
+			
+		return -1;
+	}
+	
+	if(npps_query("
+		INSERT INTO `{$user->unit_table}` (
+			unit_id,
+			next_exp,
+			max_level,
+			max_hp,
+			max_love,
+			unit_removable_skill_capacity,
+			is_removable_skill_capacity_max,
+			insert_date
+		)
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?)", 'iiiiiiii',
+			$card_id,
+			$next_exp,
+			$max_level,
+			$max_hp,
+			$max_bond,
+			$unit_data['default_removable_skill_capacity'],
+			intval($is_promo),
+			$UNIX_TIMESTAMP
+		)
+	)
+	{
+		$unit_id = npps_query('SELECT LAST_INSERT_ID() as a')[0]['a'];
 		$flags = 1;
 		
 		if($is_promo)
 			$flags = 2;
 		
-		npps_query("INSERT OR IGNORE INTO `{$temp["album_table"]}` VALUES (?, ?, 0)", 'ii', $card_id, $flags);
+		npps_query("
+			REPLACE INTO `{$user->album_table}` (unit_id, flags)
+			VALUES (?, ?)", 'ii', $card_id, $flags
+		);
 		
 		return $unit_id;
 	}
@@ -277,17 +360,15 @@ function unit_add_direct(int $user_id, int $card_id): int
 ///          removed.
 function unit_remove(int $user_id, int $unit_own_id): bool
 {
-	global $DATABASE;
-	
-	$info = npps_query(
-		"SELECT unit_table, deck_table, main_deck FROM `users` WHERE
-			user_id = $user_id"
-	)[0];
+	$user = npps_user::get_instance($user_id);
 	$deck_list = [];
 	
-	foreach(npps_query("SELECT deck_num, deck_members FROM `{$info['deck_table']}`") as $a)
+	foreach(npps_query("
+		SELECT deck_num, deck_members
+		FROM `{$user->deck_table}`
+	") as $a)
 	{
-		$b = explode(':', $a['deck_members']);
+		$b = npps_separate(':', $a['deck_members']);
 		$deck_list[$a['deck_num']] = $b;
 		
 		foreach($b as &$unit)
@@ -308,30 +389,12 @@ function unit_remove(int $user_id, int $unit_own_id): bool
 		deck_alter($user_id, $k, $v);
 	
 	// Last: update database
-	npps_query("DELETE FROM `{$info['unit_table']}` WHERE unit_id = $unit_own_id");
+	npps_query("
+		DELETE FROM `{$user->unit_table}`
+		WHERE unit_owning_user_id = $unit_own_id
+	");
 	
 	return true;
-}
-
-/// \brief Add unit to current player memerlist.
-///        If it's supporting members and `VERSION_4_SERVER` is defined in
-///        config, then this function **always** add member specificed.
-/// \param user_id Player User ID
-/// \param card_id The unit ID to add.
-/// \param item_data see item_add_present_box() for more information
-/// \returns unit_owning_user_id or 0 on failure (because the memberlist is full for example)
-function unit_add(int $user_id, int $card_id, array $item_data = []): int
-{
-	$user_unit_info = npps_query("SELECT unit_table, max_unit FROM `users` WHERE user_id = $user_id")[0];
-	$unit_current = npps_query("SELECT COUNT(unit_id) FROM `{$user_unit_info[0]}`")[0][0];
-	
-	if($unit_current >= $user_unit_info[1])
-	{
-		item_add_present_box($user_id, 1001, $item_data, 1, $card_id);
-		return 0;
-	}
-	
-	return unit_add_direct($user_id, $card_id);
 }
 
 /// \brief Used to scout member or giving player live show reward
@@ -366,9 +429,9 @@ function unit_random_regular(int $level = 1): array
 		}
 	}
 	
-	// 10% R, 90% N
+	// 5% R, 95% N
 	$result = NULL;
-	if(random_int(0, 100000) / 1000 - 90.0 <= 0.0)
+	if(random_int(0, 100000) / 1000 - 95.0 <= 0.0)
 		$result = $n_list[random_int(0, count($r_list) - 1)];
 	else
 		$result = $r_list[random_int(0, count($n_list) - 1)];

@@ -27,10 +27,72 @@ function common_initialize_environment(DatabaseWrapper $db, $direct_db = NULL)
 	throw new Exception('Unable to initialize environment!');
 }
 
-$GLOBALS['common_sqlite3_concat_function'] = function(string ...$arg): string
+function npps_sqlite3_concat_function(string ...$arg): string
 {
 	return implode($arg);
-};
+}
+
+/// \brief Decrypts all encrypted rows using keys from `data/decryption_key.ini`
+/// \param db The SQLite3DatabaseWrapper database. Must be opened with
+///           read/write mode
+/// \warning This function requires PHP OpenSSL extension to be loaded.
+function npps_decrypt_row(SQLite3DatabaseWrapper $db)
+{
+	$db->query('BEGIN');
+	foreach($db->query("
+		SELECT tbl_name FROM `sqlite_master`
+		WHERE
+			type = 'table' AND
+			sql LIKE '%_encryption_release_id%'
+		") as $list)
+	{
+		foreach($db->query("
+			SELECT rowid, release_tag, _encryption_release_id
+			FROM `{$list['tbl_name']}`
+			WHERE
+				release_tag IS NOT NULL AND
+				_encryption_release_id IS NOT NULL
+			") as $a)
+		{
+			// Decrypt all
+			$key = npps_decryption_key($a['release_tag']);
+			
+			if($key)
+			{
+				$data = json_decode(substr(openssl_decrypt(
+					$a['_encryption_release_id'],
+					'AES-128-CBC', $key
+				), 16), true);
+				
+				if($data !== NULL)
+				{
+					// Separate keys and values
+					$keys = [];
+					$vals = [];
+					$type = [];
+					
+					foreach($data as $k => $v)
+					{
+						$keys[] = $k;
+						$vals[] = $v;
+						$type[] = is_float($v) ? 'd' : (
+							is_integer($v) ? 'i' : 's');
+					}
+					
+					$update_val = implode(' = ?, ', $keys);
+					$db->query("
+						UPDATE {$list['tbl_name']} SET
+							$update_val,
+							release_tag = NULL,
+							_encryption_release_id = NULL
+						WHERE rowid = {$list['rowid']}
+					", implode('', $type), ...$vals);
+				}
+			}
+		}
+	}
+	$db->query('COMMIT');
+}
 
 /// \brief Abstract class of the NPPS database wrapper
 abstract class DatabaseWrapper
@@ -291,11 +353,21 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 		
 		if($filename)
 		{
+			// Not a main database
 			$dbname = $filename;
 			$this->custom_filename = true;
 			$this->db_id = random_int(0, 2147483647);
+			
+			if(extension_loaded('openssl'))
+			{
+				// Decrypt all rows with release_tag first
+				$this->db_handle = new SQLite3($dbname, SQLITE3_OPEN_READWRITE);
+				npps_decrypt_row($this);
+				$this->db_handle->close();
+			}
 		}
 		
+		// Open Read-Only
 		$this->db_handle = new SQLite3(
 			$dbname,
 			$custom_filename ? SQLITE3_OPEN_READONLY :
@@ -303,8 +375,7 @@ class SQLite3DatabaseWrapper extends DatabaseWrapper
 		);
 		$this->db_handle->busyTimeout(5000);			// timeout: 5 seconds
 		$this->db_handle->createFunction(
-			'CONCAT',
-			$GLOBALS['common_sqlite3_concat_function']
+			'CONCAT', 'npps_sqlite3_concat_function'
 		);
 	}
 	
@@ -454,8 +525,7 @@ class SecretboxDatabaseWrapper extends SQLite3DatabaseWrapper
 		);
 		$this->db_handle->busyTimeout(5000);			// timeout: 5 seconds
 		$this->db_handle->createFunction(
-			'CONCAT',
-			$GLOBALS['common_sqlite3_concat_function']
+			'CONCAT', 'npps_sqlite3_concat_function'
 		);
 	}
 	

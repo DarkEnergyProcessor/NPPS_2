@@ -2,7 +2,7 @@
 $unit_initial_id = intval($REQUEST_DATA['unit_initial_set_id'] ?? 0);
 
 if(
-	($unit_initial_id < 49 || $unit_initial_id > 57) ||
+	($unit_initial_id < 49 || $unit_initial_id > 57) &&
 	($unit_initial_id < 788 || $unit_initial_id > 796)
 )
 {
@@ -18,10 +18,15 @@ npps_begin_transaction();
 
 foreach($unit_deck as $i)
 {
-	$id = unit_add_direct($USER_ID, $i);
+	$id = unit_add($USER_ID, $i);
 	
 	if($id > 0)
+	{
+		if($i == $unit_initial_id)
+			$user->unit_partner = $id;
+
 		$unit_own_ids[] = $id;
+	}
 	else
 		break;
 }
@@ -35,6 +40,9 @@ if(count($unit_own_ids) != 9)
 }
 
 $user->first_choosen = $unit_initial_id;
+
+if($unit_initial_id >= 788 && $unit_initial_id <= 796)
+	$user->title_id = 23;	// Uranohoshi title
 
 if(!deck_alter($USER_ID, 1, $unit_own_ids))
 {

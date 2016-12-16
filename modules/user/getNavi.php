@@ -1,19 +1,12 @@
 <?php
-
-$unit_partner = npps_query("SELECT unit_partner FROM users WHERE user_id =".$USER_ID)[0]['unit_partner'];
-
-$return = [
-    'user' => [
-        'user_id' => $USER_ID, 
-        'unit_owning_user_id' => $unit_partner
-    ]
-];
+$user = npps_user::get_instance($USER_ID);
 
 return [
-    
-        $return
-    , 
-        200
-        ];
-
-?>
+	[
+		'user' => [
+			'user_id' => $USER_ID,
+			'unit_owning_user_id' => $user->unit_partner
+		]
+	],
+	200
+];

@@ -69,7 +69,6 @@ CREATE TABLE `users` (
 	first_choosen INTEGER NOT NULL DEFAULT 0,				-- The first choosen unit ID in the game.
 	name VARCHAR(10) NOT NULL DEFAULT "Null",				-- Nickname
 	bio VARCHAR(105) NOT NULL DEFAULT "Hello!",				-- About me section.
-	unit_partner INTEGER NOT NULL DEFAULT 0,                          -- Unit Partner
 	invite_code VARCHAR(9),									-- Friend ID
 	last_active INTEGER NOT NULL,							-- Last active in unix timestamp
 	login_count INTEGER NOT NULL DEFAULT 0,					-- Last lbonus/execute execution timestamp
@@ -92,17 +91,20 @@ CREATE TABLE `users` (
 	max_unit INTEGER NOT NULL DEFAULT 120,					-- Maximum memberlist. Including the ones that increased with loveca.
 	max_unit_loveca INTEGER NOT NULL DEFAULT 0,				-- How many times "Increase Member Limit" is used.
 	main_deck INTEGER NOT NULL DEFAULT 1,					-- Which deck is set to "Main"?
+	unit_partner INTEGER NOT NULL DEFAULT 0,				-- Unit Partner
 	secretbox_gauge INTEGER NOT NULL DEFAULT 0,				-- The secretbox gauge
 	muse_free_gacha INTEGER NOT NULL DEFAULT 0,				-- µ's part last free gacha
 	aqua_free_gacha INTEGER NOT NULL DEFAULT 0,				-- Aqours part last free gacha
+	online_play_count INTEGER NOT NULL DEFAULT 0,			-- Online match play count
+	online_play_hi_score INTEGER NOT NULL DEFAULT 0,		-- Online match highest score
 	normal_sticker INTEGER NOT NULL DEFAULT 0,				-- R stickers
 	silver_sticker INTEGER NOT NULL DEFAULT 0,				-- SR stickers
 	gold_sticker INTEGER NOT NULL DEFAULT 0,				-- SSR stickers
 	purple_sticker INTEGER NOT NULL DEFAULT 0,				-- UR stickers
 	tutorial_state INTEGER NOT NULL DEFAULT 0,				-- The tutorial state.
-	scenario_tracking TEXT DEFAULT NULL,					-- Unlocked scenario ID list, comma separated.
-	subscenario_tracking TEXT DEFAULT NULL,					-- Unlocked subscenario ID list. Add '!' to indicate it's already viewed. Comma separated (defaults to empty string)
-	unlocked_title TEXT NOT NULL,							-- Unlocked badge. Comma separated
+	scenario_tracking TEXT DEFAULT NULL,					-- Unlocked scenario ID list. Add '!' to indicate it's already viewed. Comma separated (defaults to empty string)
+	subscenario_tracking TEXT DEFAULT NULL,					-- Unlocked subscenario ID list. Format same as above
+	unlocked_title TEXT NOT NULL,							-- Unlocked title. Comma separated
 	unlocked_background TEXT NOT NULL,						-- Unlocked background. Comma separated
 	friend_table TEXT NOT NULL,								-- The friend-related table name
 	present_table TEXT NOT NULL,							-- The present box table name

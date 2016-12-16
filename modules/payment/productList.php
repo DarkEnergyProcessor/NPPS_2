@@ -1,7 +1,7 @@
 <?php
 return [
 	[
-		'product_list' => [
+		'sns_product_list' => [
 			[
 				'apple_product_id' => 'com.klab.lovelive.en.loveGem001',
 				'google_product_id' => 'com.klab.lovelive.en.loveGem001',
@@ -68,7 +68,8 @@ return [
 				'update_date' => '2013/10/24 21:16:00',
 				'product_id' => 'com.klab.lovelive.en.loveGem086'
 			]
-		]
+		],
+		'product_list' => []
 	],
 	200
 ];

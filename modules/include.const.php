@@ -35,3 +35,19 @@ define('NPPS_SONG_DIFFICULTY_EXPERT', 4);
 define('NPPS_SONG_DIFFICULTY_EXR', 5);
 /// Master difficulty
 define('NPPS_SONG_DIFFICULTY_MASTER', 6);
+
+/// Event banner
+define('NPPS_BANNER_EVENT', 0);
+/// Scouting banner
+define('NPPS_BANNER_SECRETBOX', 1);
+/// WebView banner
+define('NPPS_BANNER_WEBVIEW', 2);
+
+/// µ's limited secretbox bit
+define('NPPS_SECRETBOX_SPECIAL_MUSE', 16777216);
+/// Aqours limited secretbox bit
+define('NPPS_SECRETBOX_SPECIAL_AQUA', 33554432);
+/// µ's scouting coupon secretbox bit
+define('NPPS_SECRETBOX_COUPON_MUSE', 67108864);
+/// Aqours scouting coupon secretbox bit
+define('NPPS_SECRETBOX_COUPON_AQUA', 134217728);

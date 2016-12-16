@@ -490,6 +490,49 @@ class npps_live_difficulty
 		return $obj;
 	}
 	
+	/// \brief Search for live difficulty data in `online_live_m`
+	///        table.
+	/// \param live_difficulty_id The live difficulty id to search it's data
+	/// \returns The npps_live_difficulty object or `NULL` on failure
+	static protected function get_instance_online(int $live_difficulty_id)
+	{
+		$online_db = npps_get_database('online');
+		$live = $online_db->query("
+			SELECT
+				live_setting_id, c_rank_score, b_rank_score, a_rank_score,
+				s_rank_score
+			FROM `online_live_m` WHERE
+			live_difficulty_id = $live_difficulty_id
+		");
+		
+		if(count($live) == 0)
+			return NULL;
+		
+		$live = $live[0];
+		
+		$obj = new npps_live_difficulty();
+		$setting = npps_live_setting::get_instance($live['live_setting_id']);
+		$obj->live_difficulty_id = $live_difficulty_id;
+		$obj->live_setting = $setting;
+		$obj->capital_type = 0;
+		$obj->capital_value = 0;
+		$obj->special_setting = false;
+		$obj->normal_live = false;
+		$obj->random_flag = false;
+		$obj->stage_level = $live['stage_level'] ?? $setting->stage_level;
+		$obj->s_times = 0;
+		$obj->a_times = 0;
+		$obj->b_times = 0;
+		$obj->c_times = 0;
+		$obj->s_score = $live['s_rank_score'] ?? $setting->s_score;
+		$obj->a_score = $live['a_rank_score'] ?? $setting->a_score;
+		$obj->b_score = $live['b_rank_score'] ?? $setting->b_score;
+		$obj->c_score = $live['c_rank_score'] ?? $setting->c_score;
+		$obj->goal_reward = NULL;
+		
+		return $obj;
+	}
+	
 	/// \brief Gets instance of npps_live_difficulty object
 	/// \param live_difficulty_id The live difficulty id
 	/// \param target The database name to search for:
@@ -518,7 +561,8 @@ class npps_live_difficulty
 			'marathon' => 'npps_live_difficulty::get_instance_marathon',
 			'battle' => 'npps_live_difficulty::get_instance_battle',
 			'festival' => 'npps_live_difficulty::get_instance_festival',
-			'challenge' => 'npps_live_difficulty::get_instance_challenge'
+			'challenge' => 'npps_live_difficulty::get_instance_challenge',
+			'online' => 'npps_live_difficulty::get_instance_online'
 		];
 		
 		if(strlen($target) == 0)
@@ -564,7 +608,7 @@ class npps_live_difficulty
 		
 		for($i = 0; $i < 4; $i++)
 		{
-			if($cmplist[$i] >= $cmpval)
+			if($cmpval >= $cmplist[$i])
 				$cleared_list[] =
 					$this->goal_reward[$i + $base]['live_goal_reward_id'];
 		}

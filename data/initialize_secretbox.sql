@@ -1,4 +1,4 @@
--- NPPS Secretbox initialization
+-- NPPS Special Secretbox initialization
 
 CREATE TABLE `muse_secretbox` (											-- µ's box (Special Box)
 	secretbox_id INTEGER PRIMARY KEY AUTOINCREMENT,						-- ID Box (number)
@@ -10,6 +10,7 @@ CREATE TABLE `muse_secretbox` (											-- µ's box (Special Box)
 	banner_top TEXT NOT NULL DEFAULT 'assets/image/secretbox/top/',		-- Image secretbox page (aka top) ("String")
 	start_time INTEGER DEFAULT 0,										-- Unix timestamp when this secretbox starts
 	end_time INTEGER DEFAULT 2147483647,								-- Unix timestamp when this secretbox ends
+	cost TEXT NOT NULL DEFAULT '2,5'									-- The secretbox cost priority order, colon separated. Format: <type>(<item_id>),<amount>:...
 	r_rate REAL NOT NULL,												-- Rate for R cards (number). 0 means disable
 	sr_rate REAL NOT NULL,												-- Rate for SR cards (number). 0 means disable
 	ur_rate REAL NOT NULL,												-- Rate for UR cards (number). 0 means disable
@@ -30,6 +31,7 @@ CREATE TABLE `aqua_secretbox` (											-- Aqours's box (Special Box)
 	banner_top TEXT NOT NULL DEFAULT 'assets/image/secretbox/top/',		-- Image secretbox page (aka top) ("String")
 	start_time INTEGER DEFAULT 0,										-- Unix timestamp when this secretbox starts
 	end_time INTEGER DEFAULT 2147483647,								-- Unix timestamp when this secretbox ends
+	cost TEXT NOT NULL DEFAULT '2,5'									-- The secretbox cost priority order, colon separated. Format: <type>(<item_id>),<amount>:...
 	r_rate REAL NOT NULL,												-- Rate for R cards (number). 0 means disable
 	sr_rate REAL NOT NULL,												-- Rate for SR cards (number). 0 means disable
 	ur_rate REAL NOT NULL,												-- Rate for UR cards (number). 0 means disable
@@ -46,6 +48,7 @@ CREATE TABLE `muse_blue_secretbox` (									-- µ's box (Blue Ticket/Voucher)
 	description TEXT NOT NULL DEFAULT 'Aqua Box',						-- Description
 	title_asset TEXT NOT NULL DEFAULT 'assets/image/secretbox/title/',	-- Asset address for title
 	banner_top TEXT NOT NULL DEFAULT 'assets/image/secretbox/top/',		-- Image secretbox page (aka top) ("String")
+	blue_ticket_cost INTEGER NOT NULL DEFAULT 5,						-- Amount of Blue Ticket needed
 	r_rate REAL NOT NULL,												-- Rate for R cards (number). 0 means disable
 	sr_rate REAL NOT NULL,												-- Rate for SR cards (number). 0 means disable
 	ur_rate REAL NOT NULL,												-- Rate for UR cards (number). 0 means disable
@@ -62,6 +65,7 @@ CREATE TABLE `aqua_blue_secretbox` (									-- Aqours's box (Blue Ticket/Vouche
 	description TEXT NOT NULL DEFAULT 'Aqua Box',						-- Description
 	title_asset TEXT NOT NULL DEFAULT 'assets/image/secretbox/title/',	-- Asset address for title
 	banner_top TEXT NOT NULL DEFAULT 'assets/image/secretbox/top/',		-- Image secretbox page (aka top) ("String")
+	blue_ticket_cost INTEGER NOT NULL DEFAULT 5,						-- Amount of Blue Ticket needed
 	r_rate REAL NOT NULL,												-- Rate for R cards (number). 0 means disable
 	sr_rate REAL NOT NULL,												-- Rate for SR cards (number). 0 means disable
 	ur_rate REAL NOT NULL,												-- Rate for UR cards (number). 0 means disable

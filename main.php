@@ -7,7 +7,7 @@
 /// \file main.php
 
 ini_set('html_errors', false);
-define('MAIN_INVOKED', '0.0.1 alpha', true);
+define('MAIN_INVOKED', '20161216', true);
 
 // Fixes nginx.
 // Source: http://www.php.net/manual/en/function.getallheaders.php#84262
@@ -51,17 +51,20 @@ $CURRENT_MODULE = NULL;
 /// Temporary variable used for npps_config() to detect current action
 $CURRENT_ACTION = NULL;
 
-set_error_handler(function($errNo, $errStr, $errFile, $errLine)
+if(!defined('WEBVIEW'))
 {
-	http_response_code(500);
-	throw new ErrorException("$errStr in $errFile on line $errLine", $errNo);
-});
+	set_error_handler(function($errNo, $errStr, $errFile, $errLine)
+	{
+		http_response_code(500);
+		throw new ErrorException("$errStr in $errFile on line $errLine", $errNo);
+	});
 
-set_exception_handler(function($x)
-{
-	http_response_code(500);
-	throw $x;
-});
+	set_exception_handler(function($x)
+	{
+		http_response_code(500);
+		throw $x;
+	});
+}
 
 /// \brief Function to handle shutdown procedure
 function npps_shutdown()
@@ -174,6 +177,8 @@ function npps_main_script_handler(
 	global $RESPONSE_ARRAY;
 	global $UNIX_TIMESTAMP;
 	global $TEXT_TIMESTAMP;
+	global $CURRENT_MODULE;
+	global $CURRENT_ACTION;
 	
 	$request_data = [];
 	// Used to isolate variables when using include
@@ -284,6 +289,7 @@ function npps_main_script_handler(
 			return 0;
 		}
 		
+		define('MULTI_REQUEST', true);
 		$RESPONSE_ARRAY['response_data'] = [];
 		$RESPONSE_ARRAY['status_code'] = 200;
 		

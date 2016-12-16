@@ -1,5 +1,6 @@
 <?php
-require('sifemu.php');
+assert(chdir($_SERVER['DOCUMENT_ROOT']));
+require('dlc/sifemu.php');
 
 $os_ver = strtolower($_GET['os'] ?? '');
 $pkg_type = intval($_GET['type'] ?? -1);
@@ -24,7 +25,7 @@ if($pkg_type == 0)
 	exit;
 }
 
-$filename_target = "data/{$pkg_type}_{$pkg_id}_$os_ver.txt";
+$filename_target = "dlc/data/{$pkg_type}_{$pkg_id}_$os_ver.txt";
 
 if(file_exists($filename_target) == false)
 {
@@ -40,7 +41,7 @@ if(isset($download_id_list[$file_index]) == false)
 	exit;
 }
 
-$zip_file = "cache/{$download_id_list[$file_index]}";
+$zip_file = "dlc/cache/{$download_id_list[$file_index]}";
 
 if(file_exists($zip_file) == false)
 {

@@ -33,28 +33,28 @@ CREATE TABLE `item_$user_id` (
 
 CREATE TABLE `unit_$user_id` (
 	unit_owning_user_id INTEGER PRIMARY KEY AUTO_INCREMENT,	-- The unit owning user ID
-	unit_id INTEGER NOT NULL,								-- The card internal ID
-	exp INTEGER NOT NULL DEFAULT 0,							-- Current EXP
-	next_exp INTEGER NOT NULL,								-- Next EXP before level up
-	level INTEGER NOT NULL DEFAULT 1,						-- Card level
-	max_level INTEGER NOT NULL,								-- Card max level
-	rank INTEGER DEFAULT 1,									-- Card rank
-	max_rank INTEGER DEFAULT 2,								-- Card max rank
-	display_rank INTEGER DEFAULT 1,							-- Card display. 2 = Show idolized, 1 = Show unidolized
-	unit_skill_level INTEGER NOT NULL DEFAULT 1,			-- Skill level
-	unit_skill_exp INTEGER NOT NULL DEFAULT 0,				-- Skill level EXP. The next level EXP is automatically calcuated
-	max_hp INTEGER NOT NULL,								-- Card max HP
-	love INTEGER NOT NULL DEFAULT 0,						-- Card bond
-	max_love INTEGER NOT NULL,								-- Card max bond
-	unit_removable_skill_list TEXT,							-- Used SIS IDs for this unit, comma separated.
-	unit_removable_skill_capacity INTEGER NOT NULL,			-- SIS unlocked slot count
-	is_rank_max BOOL NOT NULL DEFAULT 0,					-- Is card already idolized?
-	is_love_max BOOL NOT NULL DEFAULT 0,					-- Is card already max bonded?
-	is_level_max BOOL NOT NULL DEFAULT 0,					-- Is card already max level?
-	is_skill_level_max BOOL NOT NULL DEFAULT 0,				-- Is card skill level in max?
-	is_removable_skill_capacity_max BOOL NOT NULL DEFAULT 0,-- Is card SIS capacity is at max?
-	favorite_flag BOOL NOT NULL DEFAULT 0,					-- Flagged as favourite?
-	insert_date INTEGER NOT NULL							-- Unix timestamp when this card added
+	unit_id INTEGER NOT NULL,									-- The card internal ID
+	exp INTEGER NOT NULL DEFAULT 0,								-- Current EXP
+	next_exp INTEGER NOT NULL,									-- Next EXP before level up
+	level INTEGER NOT NULL DEFAULT 1,							-- Card level
+	max_level INTEGER NOT NULL,									-- Card max level
+	rank INTEGER DEFAULT 1,										-- Card rank
+	max_rank INTEGER DEFAULT 2,									-- Card max rank
+	display_rank INTEGER DEFAULT 1,								-- Card display. 2 = Show idolized, 1 = Show unidolized
+	unit_skill_level INTEGER NOT NULL DEFAULT 1,				-- Skill level
+	unit_skill_exp INTEGER NOT NULL DEFAULT 0,					-- Skill level EXP. The next level EXP is automatically calcuated
+	max_hp INTEGER NOT NULL,									-- Card max HP
+	love INTEGER NOT NULL DEFAULT 0,							-- Card bond
+	max_love INTEGER NOT NULL,									-- Card max bond
+	unit_removable_skill_list TEXT,								-- Used SIS IDs for this unit, comma separated.
+	unit_removable_skill_capacity INTEGER NOT NULL DEFAULT 0,	-- SIS unlocked slot count
+	is_rank_max BOOL NOT NULL DEFAULT 0,						-- Is card already idolized?
+	is_love_max BOOL NOT NULL DEFAULT 0,						-- Is card already max bonded?
+	is_level_max BOOL NOT NULL DEFAULT 0,						-- Is card already max level?
+	is_skill_level_max BOOL NOT NULL DEFAULT 0,					-- Is card skill level in max?
+	is_removable_skill_capacity_max BOOL NOT NULL DEFAULT 0,	-- Is card SIS capacity is at max?
+	favorite_flag BOOL NOT NULL DEFAULT 0,						-- Flagged as favourite?
+	insert_date INTEGER NOT NULL								-- Unix timestamp when this card added
 );
 
 CREATE TABLE `unit_support_$user_id` (
@@ -115,6 +115,7 @@ UPDATE `users` SET
 	sticker_table = 'sticker_$user_id',
 	login_bonus_table = 'login_bonus_$user_id',
 	album_table = 'album_$user_id',
-	unlocked_title = '1',
+	scenario_tracking = '!1,!2,!3,!184,!185,!186,!187,!188',
+	unlocked_title = '1,23',
 	unlocked_background = '1'
 WHERE user_id = $user_id;

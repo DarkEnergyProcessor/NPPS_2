@@ -21,6 +21,7 @@ final class npps_user
 		'locked' => ['is_integer', 'i'],
 		'tos_agree' => ['is_integer', 'i'],
 		'create_date' => [],
+		'first_choosen' => ['is_integer', 'i'],
 		'name' => ['is_string', 's'],
 		'bio' => ['is_string', 's'],
 		'invite_code' => [],
@@ -45,15 +46,19 @@ final class npps_user
 		'max_unit' => ['is_integer', 'i'],
 		'max_unit_loveca' => ['is_integer', 'i'],
 		'main_deck' => ['is_integer', 'i'],
+		'unit_partner' => ['is_integer', 'i'],
 		'secretbox_gauge' => ['is_integer', 'i'],
 		'muse_free_gacha' => ['is_integer', 'i'],
 		'aqua_free_gacha' => ['is_integer', 'i'],
+		'online_play_count' => ['is_integer', 'i'],
+		'online_play_hi_score' => ['is_integer', 'i'],
 		'normal_sticker' => ['is_integer', 'i'],
 		'silver_sticker' => ['is_integer', 'i'],
 		'gold_sticker' => ['is_integer', 'i'],
 		'purple_sticker' => ['is_integer', 'i'],
 		'tutorial_state' => ['is_integer', 'i'],
-		'latest_scenario' => ['is_float', 'd'],
+		'scenario_tracking' => [],
+		'subscenario_tracking' => [],
 		'friend_table' => [],
 		'present_table' => [],
 		'achievement_table' => [],
@@ -120,7 +125,7 @@ final class npps_user
 			'name' => $this->name,
 			'level' => $this->level,
 			'exp' => $this->current_exp,
-			'previous_exp' => $this->current_exp - user_exp_requirement($this->level),
+			'previous_exp' => user_exp_requirement($this->level - 1),
 			'next_exp' => $this->next_exp,		
 			'game_coin' => $this->gold,
 			'sns_coin' => $this->paid_loveca + $this->free_loveca,
@@ -141,7 +146,8 @@ final class npps_user
 	
 	/// \brief Adds LP to specificed user
 	/// \param amount Amount of LP to be added to player
-	public function add_lp(int $amount) {
+	public function add_lp(int $amount)
+	{
 		global $UNIX_TIMESTAMP;
 		
 		$lp_amount_current = (int)floor(
@@ -239,9 +245,10 @@ final class npps_user
 			$need_exp += user_exp_requirement($current_level);
 		}
 		
+		$this->set_protected('next_exp', $need_exp, 'i');
+		
 		$now_lp = 25 + intdiv($current_level, 2);
 		$now_friend = 10 + intdiv($current_level, 5);
-		
 		$before_data = [
 			'exp' => $this->current_exp,
 			'level' => $this->level,
@@ -434,21 +441,51 @@ function user_configure(int $user_id, string $invite_code = NULL): bool
 		);
 	}
 	else
-		if(count(npps_query('SELECT user_id FROM `users` WHERE invite_code = ?', 's', $invite_code)) > 0)
+		if(count(npps_query('
+			SELECT user_id FROM `users`
+			WHERE invite_code = ?',
+			's',
+			$invite_code)
+		) > 0)
 			return false;
 	
 	// Create users table
+	npps_begin_transaction();
 	if(npps_file_query('data/initialize_user.sql',
 		['user_id' => $user_id, 'invite_code' => $invite_code]
 	   )
 	)
-		if(
-			/* Add Bokura no LIVE Kimi to no LIVE (easy, normal, hard) */
-			live_unlock($user_id, 1) &&	// easy
-			live_unlock($user_id, 2) &&	// normal
-			live_unlock($user_id, 3)	// hard
-		)
+	{
+		// Unlock live shows!
+		$status = 
+			// µ's songs
+			live_unlock($user_id, 1) &&
+			live_unlock($user_id, 2) &&
+			live_unlock($user_id, 3) &&
+			live_unlock($user_id, 350) &&
+			// Aqours songs
+			live_unlock($user_id, 1197) &&
+			live_unlock($user_id, 1190) &&
+			live_unlock($user_id, 1191) &&
+			live_unlock($user_id, 1192) &&
+			live_unlock($user_id, 1193) &&
+			live_unlock($user_id, 1194) &&
+			live_unlock($user_id, 1195) &&
+			live_unlock($user_id, 1196) &&
+			live_unlock($user_id, 1198) &&
+			live_unlock($user_id, 1199) &&
+			live_unlock($user_id, 1200) &&
+			live_unlock($user_id, 1201)
+		;
+		
+		if($status)
+		{
+			npps_end_transaction();
 			return true;
+		}
+	}
+	npps_end_transaction();
+	
 	return false;
 }
 

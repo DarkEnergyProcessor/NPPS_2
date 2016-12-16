@@ -1,0 +1,181 @@
+{
+	"live_difficulty_ids": [90001, 90002, 90003, 90004],
+	"max_play_count": 10,
+	"start_time": 1481778000,
+	"live_banner_asset_name": "assets/image/online/banner/o_ba_01.png",
+	"live_banner_se_asset_name": "assets/image/online/banner/o_ba_01se.png",
+	"live_description_asset": "assets/image/online/contents/o_t_01bg.png",
+	"live_instructions_url": "/webview.php/static/index?0=&id=57",
+	"live_explanation_url": "/webview.php/static/index?0=&id=56",
+	"live_end_time": 1484456400,
+	"entry_banner_asset_name": "assets/image/online/banner/o_ba_02.png",
+	"entry_banner_se_asset_name": "assets/image/online/banner/o_ba_02se.png",
+	"entry_description_asset": "assets/image/online/contents/o_t_02bg.png",
+	"entry_instructions_url": "/webview.php/static/index?0=&id=58",
+	"entry_url": "/webview.php/about/npps",
+	"entry_end_time": 1484888400,
+	
+	"unit_deck":
+	{
+		"unit_list": [
+			{
+				"position": 1,
+				"unit_id": 124,
+				"level": 80,
+				"exp": 36800,
+				"love": 500,
+				"max_hp": 4,
+				"unit_skill_level": 1,
+				"unit_skill_exp": 0,
+				"display_rank": 2,
+				"is_rank_max": true,
+				"is_level_max": true,
+				"is_love_max": true,
+				"unit_removable_skill_capacity": 3
+			},
+			{
+				"position": 2,
+				"unit_id": 122,
+				"level": 80,
+				"exp": 36800,
+				"love": 500,
+				"max_hp": 4,
+				"unit_skill_level": 1,
+				"unit_skill_exp": 0,
+				"display_rank": 2,
+				"is_rank_max": true,
+				"is_level_max": true,
+				"is_love_max": true,
+				"unit_removable_skill_capacity": 3
+			},
+			{
+				"position": 3,
+				"unit_id": 120,
+				"level": 80,
+				"exp": 36800,
+				"love": 500,
+				"max_hp": 4,
+				"unit_skill_level": 1,
+				"unit_skill_exp": 0,
+				"display_rank": 2,
+				"is_rank_max": true,
+				"is_level_max": true,
+				"is_love_max": true,
+				"unit_removable_skill_capacity": 3
+			},
+			{
+				"position": 4,
+				"unit_id": 118,
+				"level": 80,
+				"exp": 36800,
+				"love": 500,
+				"max_hp": 4,
+				"unit_skill_level": 1,
+				"unit_skill_exp": 0,
+				"display_rank": 2,
+				"is_rank_max": true,
+				"is_level_max": true,
+				"is_love_max": true,
+				"unit_removable_skill_capacity": 3
+			},
+			{
+				"position": 5,
+				"unit_id": 116,
+				"level": 80,
+				"exp": 36800,
+				"love": 500,
+				"max_hp": 4,
+				"unit_skill_level": 1,
+				"unit_skill_exp": 0,
+				"display_rank": 2,
+				"is_rank_max": true,
+				"is_level_max": true,
+				"is_love_max": true,
+				"unit_removable_skill_capacity": 3
+			},
+			{
+				"position": 6,
+				"unit_id": 117,
+				"level": 80,
+				"exp": 36800,
+				"love": 500,
+				"max_hp": 4,
+				"unit_skill_level": 1,
+				"unit_skill_exp": 0,
+				"display_rank": 2,
+				"is_rank_max": true,
+				"is_level_max": true,
+				"is_love_max": true,
+				"unit_removable_skill_capacity": 3
+			},
+			{
+				"position": 7,
+				"unit_id": 119,
+				"level": 80,
+				"exp": 36800,
+				"love": 500,
+				"max_hp": 4,
+				"unit_skill_level": 1,
+				"unit_skill_exp": 0,
+				"display_rank": 2,
+				"is_rank_max": true,
+				"is_level_max": true,
+				"is_love_max": true,
+				"unit_removable_skill_capacity": 3
+			},
+			{
+				"position": 8,
+				"unit_id": 121,
+				"level": 80,
+				"exp": 36800,
+				"love": 500,
+				"max_hp": 4,
+				"unit_skill_level": 1,
+				"unit_skill_exp": 0,
+				"display_rank": 2,
+				"is_rank_max": true,
+				"is_level_max": true,
+				"is_love_max": true,
+				"unit_removable_skill_capacity": 3
+			},
+			{
+				"position": 9,
+				"unit_id": 123,
+				"level": 80,
+				"exp": 36800,
+				"love": 500,
+				"max_hp": 4,
+				"unit_skill_level": 1,
+				"unit_skill_exp": 0,
+				"display_rank": 2,
+				"is_rank_max": true,
+				"is_level_max": true,
+				"is_love_max": true,
+				"unit_removable_skill_capacity": 3
+			}
+		],
+		"deck_name": "Hello World",
+		"deck_info":
+		{
+			"total_smile": 41870,
+			"total_cute": 39560,
+			"total_cool": 38620,
+			"total_hp": 36,
+			"prepared_hp_damage": 0
+		}
+	},
+	"guest_info": {
+		"user_info": {
+			"name": "NPPS",
+			"level": 80
+		},
+		"center_unit_info": {
+			"unit_id": 145,
+			"level": 80,
+			"is_rank_max": true,
+			"is_love_max": true,
+			"is_level_max": true
+		},
+		"setting_award_id": 23
+	}
+}

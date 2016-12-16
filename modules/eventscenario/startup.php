@@ -6,7 +6,7 @@ if(!npps_config('UNLOCK_ALL_EVENTSCENARIO'))
 }
 
 $event_scenario_id = intval($REQUEST_DATA['event_scenario_id'] ?? 0);
-$pseudo_event_id = intdiv($event_scenario_id - 1, 5) - 9;
+$pseudo_event_id = (intdiv($event_scenario_id - 1, 5) + 12) * 2;
 
 if($event_scenario_id < 1 || $event_scenario_id > 45)
 	return ERROR_CODE_SUBSCENARIO_NOT_FOUND;

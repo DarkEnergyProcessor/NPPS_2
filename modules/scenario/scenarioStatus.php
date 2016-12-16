@@ -1,22 +1,28 @@
 <?php
 $user = npps_user::get_instance($USER_ID);
-$new_scenario_data = npps_separate('.', $user->latest_scenario);
-$last_scenario = $new_scenario_data[0];
-$new_scenario = $new_scenario_data[1] ?? $last_scenario;
+$new_scenario_data = explode(',', $user->scenario_tracking);
 
 $scenario_data = [];
 
-for($i = 1; $i <= $last_scenario; $i++)
+foreach($new_scenario_data as $s)
+{
+	if(strlen($s) == 0) continue;
+	
+	$status = 1;
+	$sid = 0;
+	
+	if(strcmp($s[0], '!') == 0)
+	{
+		$sid = intval(substr($s, 1));
+		$status = 2;
+	}
+	else
+		$sid = intval($s);
 	$scenario_data[] = [
-		'scenario_id' => $i,
-		'status' => 2
+		'scenario_id' => $sid,
+		'status' => $status
 	];
-
-if($new_scenario > $last_scenario)
-	$scenario_data[] = [
-		'scenario_id' => $new_scenario,
-		'status' => 1
-	];
+}
 
 return [
 	[
