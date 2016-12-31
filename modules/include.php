@@ -6,7 +6,7 @@
 
 /// \file include.php
 
-/// \brief Same as strpos() but accepts array as the neddles.
+/// \brief Same as strpos() but accepts array as the needles.
 /// \param haystack The string to search in
 /// \param needles List of string to be searched
 /// \returns Position of string occured, or false if not found
@@ -490,6 +490,17 @@ function npps_call_module(
 	}
 	else if(!$val)
 		return NULL;
+}
+
+/// \brief Get client version of current connection
+/// \returns The client-version header value or empty string if used in
+///          interpreter
+function npps_client_version(): string
+{
+	if(strcmp(PHP_SAPI, 'cli') == 0)
+		return '';
+	else
+		return $GLOBALS['REQUEST_HEADERS']['Client-Version'];
 }
 
 /// \brief Get decryption key (v4.0.x only)

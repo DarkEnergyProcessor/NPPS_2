@@ -1,0 +1,207 @@
+{
+    "use_cache": 1,
+    "is_unit_max": true,
+    "item_list": [],
+    "gauge_info": {
+        "max_gauge_point": 100,
+        "gauge_point": 0
+    },
+    "member_category_list": [{
+            "member_category": 1,
+            "tab_list": [{
+                "secret_box_tab_id": 1,
+                "title_img_asset": "assets/image/secretbox/tab/s_tab_01.png",
+                "title_img_se_asset": "assets/image/secretbox/tab/s_tab_01se.png",
+                "page_list": [{
+                    "secret_box_page_id": 1,
+                    "page_layout": 1,
+                    "default_img_info": {
+                        "banner_img_asset": "assets/image/secretbox/icon/s_ba_3_2.png",
+                        "banner_se_img_asset": "assets/image/secretbox/icon/s_ba_3_2se.png",
+                        "img_asset": "assets/image/secretbox/top/s_con_n_3_2.png",
+                        "url": "/webview.php/secretBox/index?template_id=31&secret_box_id=2"
+                    },
+                    "limited_img_info": [{
+                        "banner_img_asset": "assets/image/secretbox/icon/s_ba_3_2.png",
+                        "banner_se_img_asset": "assets/image/secretbox/icon/s_ba_3_2se.png",
+                        "img_asset": "assets/image/secretbox/top/s_con_n_3_2.png",
+                        "url": "/webview.php/secretBox/index?template_id=31&secret_box_id=2",
+                        "start_date": "2016-12-05 09:00:00",
+                        "end_date": "2025-12-31 23:59:59"
+                    }],
+                    "effect_list": [],
+                    "secret_box_list": [{
+                            "secret_box_id": 1,
+                            "name": "Regular Student Scouting",
+                            "title_asset": null,
+                            "description": "dummy",
+                            "start_date": "2013-06-05 00:00:00",
+                            "end_date": "2037-12-31 23:59:59",
+                            "add_gauge": 0,
+                            "multi_type": 0,
+                            "multi_count": 10,
+                            "is_pay_cost": true,
+                            "is_pay_multi_cost": false,
+                            "within_single_limit": 1,
+                            "within_multi_limit": 1,
+                            "cost": {
+                                "priority": 1,
+                                "type": 4,
+                                "item_id": null,
+                                "amount": 1,
+                                "multi_amount": 10
+                            },
+                            "pon_count": 891,
+                            "pon_upper_limit": 0,
+                            "display_type": 0
+                        },
+                        {
+                            "secret_box_id": 2,
+                            "name": "Honor Student Scouting ",
+                            "title_asset": null,
+                            "description": "dummy",
+                            "start_date": "2013-06-05 00:00:00",
+                            "end_date": "2037-12-31 23:59:59",
+                            "add_gauge": 10,
+                            "multi_type": 1,
+                            "multi_count": 11,
+                            "is_pay_cost": true,
+                            "is_pay_multi_cost": true,
+                            "within_single_limit": 1,
+                            "within_multi_limit": 1,
+                            "cost": {
+                                "priority": 3,
+                                "type": 1,
+                                "item_id": null,
+                                "amount": 5,
+                                "multi_amount": 50
+                            },
+                            "pon_count": 87,
+                            "pon_upper_limit": 0,
+                            "display_type": 0
+                        }
+                    ]
+                }]
+            }]
+        },
+        {
+            "member_category": 2,
+            "tab_list": [{
+                "secret_box_tab_id": 1,
+                "title_img_asset": "assets/image/secretbox/tab/s_tab_01.png",
+                "title_img_se_asset": "assets/image/secretbox/tab/s_tab_01se.png",
+                "page_list": [{
+                    "secret_box_page_id": 32,
+                    "page_layout": 1,
+                    "default_img_info": {
+                        "banner_img_asset": "assets/image/secretbox/icon/s_ba_62_1.png",
+                        "banner_se_img_asset": "assets/image/secretbox/icon/s_ba_62_1se.png",
+                        "img_asset": "assets/image/secretbox/top/s_con_n_62_1.png",
+                        "url": "/webview.php/secretBox/index?template_id=31&secret_box_id=62"
+                    },
+                    "limited_img_info": [{
+                            "banner_img_asset": "assets/image/secretbox/icon/s_ba_62_1.png",
+                            "banner_se_img_asset": "assets/image/secretbox/icon/s_ba_62_1se.png",
+                            "img_asset": "assets/image/secretbox/top/s_con_n_62_1.png",
+                            "url": "/webview.php/secretBox/index?template_id=31&secret_box_id=62",
+                            "start_date": "2016-09-26 08:10:00",
+                            "end_date": "2026-09-29 23:59:59"
+                        },
+                        {
+                            "banner_img_asset": "assets/image/secretbox/icon/s_ba_62_2.png",
+                            "banner_se_img_asset": "assets/image/secretbox/icon/s_ba_62_2se.png",
+                            "img_asset": "assets/image/secretbox/top/s_con_n_62_2.png",
+                            "url": "/webview.php/secretBox/index?template_id=31&secret_box_id=62",
+                            "start_date": "2016-09-30 00:00:00",
+                            "end_date": "2026-10-09 07:59:59"
+                        }
+                    ],
+                    "effect_list": [{
+                            "unit_id": 1009,
+                            "normal_unit_img_asset": "assets/image/units/u_normal_card_42103001.png",
+                            "rankup_unit_img_asset": "assets/image/units/u_rankup_card_42103001.png",
+                            "type": 1,
+                            "start_date": "2016-12-08 08:10:00",
+                            "end_date": "2016-12-14 07:59:59"
+                        },
+                        {
+                            "unit_id": 1008,
+                            "normal_unit_img_asset": "assets/image/units/u_normal_card_51102001.png",
+                            "rankup_unit_img_asset": "assets/image/units/u_rankup_card_51102001.png",
+                            "type": 1,
+                            "start_date": "2016-12-08 08:10:00",
+                            "end_date": "2016-12-14 07:59:59"
+                        },
+                        {
+                            "unit_id": 1006,
+                            "normal_unit_img_asset": "assets/image/units/u_normal_card_33105001.png",
+                            "rankup_unit_img_asset": "assets/image/units/u_rankup_card_33105001.png",
+                            "type": 1,
+                            "start_date": "2016-12-08 08:10:00",
+                            "end_date": "2016-12-14 07:59:59"
+                        },
+                        {
+                            "unit_id": 1007,
+                            "normal_unit_img_asset": "assets/image/units/u_normal_card_33107001.png",
+                            "rankup_unit_img_asset": "assets/image/units/u_rankup_card_33107001.png",
+                            "type": 1,
+                            "start_date": "2016-12-08 08:10:00",
+                            "end_date": "2016-12-14 07:59:59"
+                        }
+                    ],
+                    "secret_box_list": [{
+                            "secret_box_id": 61,
+                            "name": "Regular Scouting",
+                            "title_asset": null,
+                            "description": "dummy",
+                            "start_date": "2015-07-05 00:00:00",
+                            "end_date": "2037-12-31 23:59:59",
+                            "add_gauge": 0,
+                            "multi_type": 0,
+                            "multi_count": 10,
+                            "is_pay_cost": true,
+                            "is_pay_multi_cost": false,
+                            "within_single_limit": 1,
+                            "within_multi_limit": 1,
+                            "cost": {
+                                "priority": 1,
+                                "type": 4,
+                                "item_id": null,
+                                "amount": 1,
+                                "multi_amount": 10
+                            },
+                            "pon_count": 14,
+                            "pon_upper_limit": 0,
+                            "display_type": 0
+                        },
+                        {
+                            "secret_box_id": 62,
+                            "name": "Honor Scouting",
+                            "title_asset": null,
+                            "description": "dummy",
+                            "start_date": "2015-07-05 00:00:00",
+                            "end_date": "2037-12-31 23:59:59",
+                            "add_gauge": 10,
+                            "multi_type": 1,
+                            "multi_count": 11,
+                            "is_pay_cost": true,
+                            "is_pay_multi_cost": true,
+                            "within_single_limit": 1,
+                            "within_multi_limit": 1,
+                            "cost": {
+                                "priority": 3,
+                                "type": 1,
+                                "item_id": null,
+                                "amount": 5,
+                                "multi_amount": 50
+                            },
+                            "pon_count": 0,
+                            "pon_upper_limit": 0,
+                            "display_type": 0
+                        }
+                    ]
+                }]
+            }]
+        }
+    ]
+}

@@ -6,9 +6,7 @@ if($platform === NULL)
 {
 	// Not connected
 	return [
-		[
-			'is_connected' => false
-		],
+		['is_connected' => false],
 		200
 	];
 }
@@ -19,17 +17,13 @@ if($platform[1] != $PLATFORM_ID)
 {
 	// Connected but platform code doesn't match
 	return [
-		[
-			'is_connected' => false
-		],
+		['is_connected' => false],
 		200
 	];
 }
 
 // Connected
 return [
-	[
-		'is_connected' => true
-	],
+	['is_connected' => true],
 	200
 ];

@@ -80,10 +80,10 @@ class npps_live_setting
 		$this->a_score = $ls_data['a_rank_score'];
 		$this->b_score = $ls_data['b_rank_score'];
 		$this->c_score = $ls_data['c_rank_score'];
-		$this->s_score = $ls_data['s_rank_combo'];
-		$this->a_score = $ls_data['a_rank_combo'];
-		$this->b_score = $ls_data['b_rank_combo'];
-		$this->c_score = $ls_data['c_rank_combo'];
+		$this->s_combo = $ls_data['s_rank_combo'];
+		$this->a_combo = $ls_data['a_rank_combo'];
+		$this->b_combo = $ls_data['b_rank_combo'];
+		$this->c_combo = $ls_data['c_rank_combo'];
 	}
 	
 	/// \brief Gets instance of npps_live_setting based from the specificed
@@ -724,33 +724,13 @@ function live_unlock(int $user_id, int $live_difficulty_id): bool
 	return false;
 }
 
-/// \brief Gets live information for specificed user
+/// \brief Synonym of live_get_status()
 /// \param user_id Player user ID
 /// \param live_difficulty_id The live ID to check
-/// \returns Associative array which contains score, combo, and clear.
+/// \returns See live_get_status()
 function live_get_info(int $user_id, int $live_difficulty_id): array
 {	
-	$out = [
-		'score' => 0,
-		'combo' => 0,
-		'clear' => 0
-	];
-	
-	$data = npps_query("
-		SELECT score, combo, times FROM `live_information`
-		WHERE live_difficulty_id = $live_difficulty_id AND user_id = $user_id"
-	);
-	
-	if(count($data) > 0)
-	{
-		$data = $data[0];
-		
-		$out['score'] = $data['score'];
-		$out['combo'] = $data['combo'];
-		$out['clear'] = $data['times'];
-	}
-	
-	return $out;
+	return live_get_status($user_id, $live_difficulty_id);
 }
 
 /// \brief Sets the user live information

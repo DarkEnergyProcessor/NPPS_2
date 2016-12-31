@@ -39,17 +39,36 @@ foreach(npps_query("
 ") as $l)
 {
 	$lobj = npps_live_difficulty::get_instance($l['live_difficulty_id']);
-	$lstatus = live_get_info($USER_ID, $l['live_difficulty_id']);
+	$lstatus = live_get_status($USER_ID, $l['live_difficulty_id']);
 	
 	$special_live[] = [
-		'live_difficulty_id' => $l['live_difficulty_id'],
+		'live_difficulty_id' => $live_id,
 		'status' =>
-			$l['times'] > 0 ? NPPS_LIVE_EVER_CLEAR : NPPS_LIVE_NEW,
-		'hi_score' => $l['score'],
-		'hi_combo_count' => $l['combo'],
-		'clear_cnt' => $l['times'],
+			$lstatus['times'] > 0 ? NPPS_LIVE_EVER_CLEAR : NPPS_LIVE_NEW,
+		'hi_score' => $lstatus['score'],
+		'hi_combo_count' => $lstatus['combo'],
+		'clear_cnt' => $lstatus['times'],
 		'achieved_goal_id_list' => $lobj->goal_reward(
-			$l['score'], $l['combo'], $l['times']
+			$lstatus['score'], $lstatus['combo'], $lstatus['times']
+		)
+	];
+}
+
+// Special live (daily)
+foreach(live_get_current_daily() as $live_id)
+{
+	$lobj = npps_live_difficulty::get_instance($live_id);
+	$lstatus = live_get_status($USER_ID, $live_id);
+	
+	$special_live[] = [
+		'live_difficulty_id' => $live_id,
+		'status' =>
+			$lstatus['times'] > 0 ? NPPS_LIVE_EVER_CLEAR : NPPS_LIVE_NEW,
+		'hi_score' => $lstatus['score'],
+		'hi_combo_count' => $lstatus['combo'],
+		'clear_cnt' => $lstatus['times'],
+		'achieved_goal_id_list' => $lobj->goal_reward(
+			$lstatus['score'], $lstatus['combo'], $lstatus['times']
 		)
 	];
 }
@@ -73,7 +92,7 @@ foreach(npps_query("
 		foreach(npps_separate(',', $livelist) as $live_difficulty_id)
 		{
 			$lobj = npps_live_difficulty::get_instance($live_difficulty_id);
-			$stats = live_get_info($USER_ID, $live_difficulty_id);
+			$stats = live_get_status($USER_ID, $live_difficulty_id);
 			
 			$marathon_live[] = [
 				'live_difficulty_id' => $live_difficulty_id,

@@ -24,7 +24,7 @@ foreach(npps_query("
 
 $secretbox_array = json_decode(file_get_contents('data/secretbox.json'), true);
 $muse_secretbox = $secretbox_array[0]['normal_secretbox'];
-$id = 0;
+$aqua_secretbox = $secretbox_array[1]['normal_secretbox'];
 
 // Muse secretbox
 $banner_list[] = [
@@ -35,6 +35,14 @@ $banner_list[] = [
 ];
 
 // Aqua secretbox, TODO
+/*
+$banner_list[] = [
+	'banner_type' => NPPS_BANNER_SECRETBOX,
+	'target_id' => -2,
+	'asset_path' => $aqua_secretbox['banner_image'],
+	'asset_path_se' => $aqua_secretbox['banner_image_selected'],
+];
+*/
 
 // Enum secretbox DB
 $secretbox_db = npps_get_database('secretbox');

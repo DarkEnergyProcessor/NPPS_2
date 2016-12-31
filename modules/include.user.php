@@ -59,6 +59,8 @@ final class npps_user
 		'tutorial_state' => ['is_integer', 'i'],
 		'scenario_tracking' => [],
 		'subscenario_tracking' => [],
+		'unlocked_background' => ['is_string', 's'],
+		'unlocked_title' => ['is_string', 's'],
 		'friend_table' => [],
 		'present_table' => [],
 		'achievement_table' => [],

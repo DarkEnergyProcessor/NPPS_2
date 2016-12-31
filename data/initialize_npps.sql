@@ -17,7 +17,7 @@ CREATE TABLE `birthday_login_bonus` (
 );
 
 CREATE TABLE `daily_rotation` (
-	live_difficulty_id INTEGER PRIMARY KEY,		-- The live ID
+	live_difficulty_id INTEGER NOT NULL,		-- The live ID
 	daily_category INTEGER NOT NULL				-- The daily live categoy ID.
 );
 

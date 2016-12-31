@@ -10,7 +10,7 @@ CREATE TABLE `muse_secretbox` (											-- µ's box (Special Box)
 	banner_top TEXT NOT NULL DEFAULT 'assets/image/secretbox/top/',		-- Image secretbox page (aka top) ("String")
 	start_time INTEGER DEFAULT 0,										-- Unix timestamp when this secretbox starts
 	end_time INTEGER DEFAULT 2147483647,								-- Unix timestamp when this secretbox ends
-	cost TEXT NOT NULL DEFAULT '2,5'									-- The secretbox cost priority order, colon separated. Format: <type>(<item_id>),<amount>:...
+	cost TEXT NOT NULL DEFAULT '2,5',									-- The secretbox cost priority order, colon separated. Format: <type>(<item_id>),<amount>:...
 	r_rate REAL NOT NULL,												-- Rate for R cards (number). 0 means disable
 	sr_rate REAL NOT NULL,												-- Rate for SR cards (number). 0 means disable
 	ur_rate REAL NOT NULL,												-- Rate for UR cards (number). 0 means disable
@@ -31,7 +31,7 @@ CREATE TABLE `aqua_secretbox` (											-- Aqours's box (Special Box)
 	banner_top TEXT NOT NULL DEFAULT 'assets/image/secretbox/top/',		-- Image secretbox page (aka top) ("String")
 	start_time INTEGER DEFAULT 0,										-- Unix timestamp when this secretbox starts
 	end_time INTEGER DEFAULT 2147483647,								-- Unix timestamp when this secretbox ends
-	cost TEXT NOT NULL DEFAULT '2,5'									-- The secretbox cost priority order, colon separated. Format: <type>(<item_id>),<amount>:...
+	cost TEXT NOT NULL DEFAULT '2,5',									-- The secretbox cost priority order, colon separated. Format: <type>(<item_id>),<amount>:...
 	r_rate REAL NOT NULL,												-- Rate for R cards (number). 0 means disable
 	sr_rate REAL NOT NULL,												-- Rate for SR cards (number). 0 means disable
 	ur_rate REAL NOT NULL,												-- Rate for UR cards (number). 0 means disable

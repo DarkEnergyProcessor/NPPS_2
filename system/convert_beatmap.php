@@ -1,5 +1,7 @@
 <?php
-// Usage: Send POST request to http://<npps>/system/convert_beatmap.php?live_setting_id=<live_setting_id> where "notes_data" form is JSON-encoded notes data
+// Usage: POST http://<npps>/system/convert_beatmap.php?live_setting_id=<live_setting_id>
+// FORM notes_data = <JSON-encoded notes data>
+
 $is_post = strcmp($_SERVER['REQUEST_METHOD'], 'POST') == 0;
 
 if($is_post)

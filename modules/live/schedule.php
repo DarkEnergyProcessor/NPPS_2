@@ -41,10 +41,10 @@ foreach(npps_query("
 		'event_id' => $ev['event_id'],
 		'event_category_id' => $event_info['event_category_id'],
 		'name' => $event_info['name'],
-		'open_date' => to_utcdatetime($ev['event_start']),
-		'start_date' => to_utcdatetime($ev['event_start'] + 1),
-		'end_date' => to_utcdatetime($ev['event_end']),
-		'close_date' => to_utcdatetime($ev['event_close']),
+		'open_date' => to_utcdatetime($ev['start_time']),
+		'start_date' => to_utcdatetime($ev['start_time'] + 1),
+		'end_date' => to_utcdatetime($ev['end_time']),
+		'close_date' => to_utcdatetime($ev['close_time']),
 		'banner_asset_name' => $event_info['banner_asset_name'],
 		'banner_se_asset_name' => $event_info['banner_se_asset_name'],
 		'result_banner_asset_name' => $event_info['result_banner_asset_name'],
@@ -61,8 +61,8 @@ foreach(npps_query("
 					$lobj = npps_live_difficulty::get_instance($live_id);
 					$live_time[] = [
 						'live_difficulty_id' => ($live_id),
-						'start_date' => to_utcdatetime($ev['event_start']),
-						'end_date' => to_utcdatetime($ev['event_end']),
+						'start_date' => to_utcdatetime($ev['start_time']),
+						'end_date' => to_utcdatetime($ev['end_time']),
 						'is_random' => $lobj->random_flag,
 						'dangerous' => $lobj->stage_level >= 11,
 						'use_quad_point' => $lobj->special_setting

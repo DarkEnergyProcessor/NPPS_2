@@ -11,7 +11,7 @@ foreach(npps_query("
 {
 	$user_token = 0;
 	$user_point = 0;
-	$token_info = explode(':', $ev[2]);
+	$token_info = explode(':', $ev['token_image']);
 	
 	if(($user_event_info = npps_query("
 		SELECT total_points, current_token FROM `{$ev['event_ranking_table']}`
